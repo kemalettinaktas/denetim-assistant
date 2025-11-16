@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEB Denetim Asistanı v7.2 - Tam Metin Düzeltmesi</title>
+    <style>
+	.program-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 80px 100px 50px;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+.program-row input {
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.program-row button {
+  background: var(--no-color);
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-weight: bold;
+}
+#add-program-btn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+        :root {
+            --primary-color: #0056b3;
+            --secondary-color: #f4f4f4;
+            --border-color: #ccc;
+            --text-color: #333;
+            --yes-color: #28a745;
+            --no-color: #dc3545;
+            --yes-bg: #e9f5ec;
+            --no-bg: #fbebee;
+            --sidebar-width: 300px;
+            --right-sidebar-width: 450px;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9f9f9;
+            margin: 0;
+            display: flex;
+        }
+        #error-box {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            background: #dc3545; color: white;
+            padding: 15px; text-align: center;
+            font-weight: bold; z-index: 9999;
+        }
+        
+        #sidebar-nav {
+            flex: 0 0 var(--sidebar-width);
+            height: 100vh;
+            background: #fff;
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            position: sticky;
+            top: 0;
+            box-sizing: border-box;
+        }
+        #sidebar-nav h3 { font-size: 1.2em; color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-top: 0; }
+        #sidebar-nav a { display: block; padding: 8px 10px; text-decoration: none; color: #444; border-radius: 4px; font-size: 0.95em; }
+        #sidebar-nav a:hover { background-color: var(--secondary-color); }
+        #sidebar-nav a.main-category { font-weight: bold; font-size: 1em; color: #000; margin-top: 15px; cursor: pointer; }
+        #sidebar-nav a.sub-category { padding-left: 30px; }
+        #sidebar-nav a.completed::after { content: ' ✔️'; color: var(--yes-color); font-weight: bold; float: right; }
+
+        .sidebar-submenu {
+            padding-left: 15px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        #sidebar-nav a.main-category::before { content: '► '; font-size: 0.8em; }
+        #sidebar-nav a.main-category:not(.collapsed)::before { content: '▼ '; }
+        #sidebar-nav a.main-category:not(.collapsed) + .sidebar-submenu { max-height: 1000px; }
+
+        #main-content { flex: 1 1 auto; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .container { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px; }
+        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--primary-color); padding-bottom: 20px; margin-bottom: 30px; }
+        .header-logo { flex: 0 0 100px; text-align: center; }
+        .header-logo img { max-width: 100%; max-height: 80px; }
+        .header-title { flex: 1; text-align: center; padding: 0 20px; }
+        .header-title h1 { color: var(--primary-color); font-size: 2em; margin: 0; }
+        .header-title p { font-size: 0.9em; color: #555; margin: 5px 0 0 0; }
+
+        h2.collapsible-header { cursor: pointer; }
+        h2.collapsible-header::before { content: '► '; font-size: 0.8em; color: #555; }
+        h2.collapsible-header:not(.collapsed)::before { content: '▼ '; }
+        .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; border-bottom: 1px dashed var(--border-color); margin-bottom: 20px; padding-bottom: 20px; }
+        h2.collapsible-header:not(.collapsed) + .collapsible-content { max-height: 10000px; }
+
+        h3 { font-size: 1.4em; color: #444; margin-top: 30px; padding-left: 10px; border-left: 4px solid var(--primary-color); }
+        .info-section { background: var(--secondary-color); border: 1px solid var(--border-color); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .info-section h3 { margin-top: 0; border-left: none; padding-left: 0; }
+        .prose-section { background: var(--secondary-color); border: 1px solid var(--border-color); padding: 20px; border-radius: 8px; margin-top: 25px; }
+        .info-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .info-grid div { display: flex; flex-direction: column; }
+        .info-grid label { font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
+        .info-grid input { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1em; }
+        .prose-section label { font-weight: bold; display: block; margin-bottom: 8px; }
+        .prose-section textarea { width: 100%; min-height: 100px; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit; resize: vertical; }
+        .btn-magic-summary { background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9em; margin-top: 10px; }
+        .btn-magic-summary:hover { background-color: #5a6268; }
+        
+        /* v7.0 YÖNETİCİ FORMU STİLLERİ */
+        .manager-row { display: grid; grid-template-columns: 40px 1fr 1fr 1fr 1fr 50px; gap: 5px; margin-bottom: 5px; }
+        .manager-row input { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9em; }
+        .manager-row button { background: var(--no-color); color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        #add-manager-btn { background: var(--primary-color); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        /* ----- */
+        
+        .checklist-item { display: flex; flex-wrap: wrap; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .checklist-item.selected-yes { background-color: var(--yes-bg); border-color: var(--yes-color); }
+        .checklist-item.selected-no { background-color: var(--no-bg); border-color: var(--no-color); }
+        .item-text { flex: 1 1 60%; min-width: 300px; padding-right: 20px; }
+        .item-controls { flex: 0 0 auto; }
+        .button-group { margin-bottom: 0; }
+        .btn { padding: 8px 16px; border: 1px solid var(--border-color); background-color: #fff; color: var(--text-color); cursor: pointer; border-radius: 4px; font-size: 1em; margin-right: 10px; }
+        .btn-yes.selected, .btn-yes:hover { background-color: var(--yes-color); color: white; border-color: var(--yes-color); }
+        .btn-no.selected, .btn-no:hover { background-color: var(--no-color); color: white; border-color: var(--no-color); }
+        .controls { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); margin-bottom: 30px; text-align: center; }
+        
+        .btn-generate { background-color: var(--yes-color); color: white; border: none; padding: 15px 30px; font-size: 1.2em; font-weight: bold; cursor: pointer; border-radius: 8px; width: 100%; margin-bottom: 10px; }
+        .btn-word { background-color: #2b579a; color: white; border: none; padding: 12px 30px; font-size: 1.1em; font-weight: bold; cursor: pointer; border-radius: 8px; width: 100%; margin-bottom: 15px; }
+        .btn-word:hover { background-color: #1e3f75; }
+        
+        .backup-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .btn-control { border: none; padding: 10px 20px; font-size: 1em; font-weight: bold; cursor: pointer; border-radius: 8px; color: white; }
+        .btn-export { background-color: var(--primary-color); }
+        .btn-import { background-color: #6c757d; }
+        .btn-clear-storage { background-color: var(--no-color); }
+        #import-file-input { display: none; }
+
+        #live-report-sidebar { flex: 0 0 var(--right-sidebar-width); height: 100vh; background: #fdfdfd; border-left: 1px solid var(--border-color); padding: 20px; overflow-y: auto; position: sticky; top: 0; box-sizing: border-box; }
+        #live-report-sidebar h3 { font-size: 1.2em; color: var(--no-color); border-bottom: 2px solid var(--no-color); padding-bottom: 10px; margin-top: 0; }
+        .live-report-category h4 { font-size: 1.1em; color: #333; background-color: var(--secondary-color); padding: 8px; border-radius: 4px; margin-top: 20px; margin-bottom: 10px; }
+        .live-report-item { margin-bottom: 15px; }
+        .live-report-item label { display: block; font-weight: bold; font-size: 0.9em; margin-bottom: 5px; color: #555; }
+        .live-report-item textarea { width: 100%; min-height: 50px; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit; font-size: 0.95em; box-sizing: border-box; }
+        textarea.bulgu-textarea { border-left: 3px solid var(--no-color); }
+        textarea.oneri-textarea { border-left: 3px solid var(--yes-color); }
+        #live-report-placeholder { color: #777; font-style: italic; text-align: center; padding: 30px; }
+
+        #report-output { display: none; }
+        @media print {
+            body { padding-left: 0; display: block; }
+            #error-box { display: none; }
+            #sidebar-nav, #main-content, #live-report-sidebar { display: none !important; visibility: hidden; }
+            body * { visibility: hidden; }
+            #report-output { display: block !important; visibility: visible !important; position: static; width: 100%; font-family: 'Times New Roman', Times, serif; color: #000; }
+            #report-output, #report-output * { visibility: visible !important; }
+            .report-page { width: 210mm; min-height: 297mm; padding: 20mm; margin: 0 auto; box-sizing: border-box; page-break-after: always; }
+            .report-header { text-align: center; font-weight: bold; margin-bottom: 30px; }
+            .report-header-grid { display: flex; align-items: center; justify-content: space-between; }
+            .report-header-grid div { flex: 1; }
+            .report-header-grid img { max-height: 70px; }
+            .report-header-grid div:nth-child(1) { text-align: left; }
+            .report-header-grid div:nth-child(2) { font-size: 1.1em; text-align: center; }
+            .report-header-grid div:nth-child(3) { text-align: right; }
+            .report-title { text-align: center; font-weight: bold; font-size: 1.2em; margin-top: 40px; }
+            .report-metadata { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11pt; }
+            .report-metadata td { padding: 4px 0; }
+            .report-metadata td:first-child { font-weight: bold; width: 30%; }
+            .report-metadata td:nth-child(2) { width: 5%; text-align: center; }
+            .report-sayi-konu { margin-top: 40px; font-size: 11pt; line-height: 1.5; }
+            .report-sayi-konu div { display: flex; }
+            .report-sayi-konu div span:first-child { font-weight: bold; width: 80px; }
+            .report-recipient { font-weight: bold; margin-top: 30px; }
+            .report-body { margin-top: 20px; text-align: justify; font-size: 12pt; line-height: 1.5; }
+            .report-body h3 { font-size: 13pt; margin-top: 20px; margin-bottom: 10px; font-weight: bold; border: none; padding-left: 0; text-align: left; }
+            .report-body h4.report-subtitle { font-size: 12pt; font-weight: bold; text-indent: 0px; margin-top: 15px; margin-bottom: 5px; }
+            .report-body p { margin-top: 0; margin-bottom: 10px; text-indent: 35px; }
+            .report-body .no-indent { text-indent: 0; }
+            .report-bulgular { margin-top: 15px; padding-left: 35px; }
+            .report-bulgular h4 { font-size: 12pt; font-weight: bold; margin: 10px 0; }
+            .report-bulgular ol { padding-left: 20px; margin: 0; }
+            .report-bulgular li { margin-bottom: 8px; }
+            .report-signature { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; font-size: 12pt; }
+            .report-body table.report-table { width: 100%;border: 1px solid #000; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; font-size: 11pt; }
+            .report-body table.report-table th, .report-body table.report-table td { border: 1px solid #000; padding: 6px 8px; text-align: left; }
+            .report-body table.report-table th { background-color: #eee; }
+            .yonetici-tablosu th { text-align: center; vertical-align: middle; }
+            .yonetici-tablosu td { height: 30px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="error-box"></div>
+
+    <nav id="sidebar-nav">
+        <h3>Denetim Menüsü</h3>
+        <a href="#info-section-anchor" class="main-category collapsed">1. Rapor Bilgileri</a>
+    </nav>
+
+    <div id="main-content">
+        <div class="container">
+            <div class="header">
+                <div class="header-logo">
+                </div>
+                <div class="header-title">
+                    <h1>Eğitim Müfettişi Denetim Asistanı</h1>
+                    <p>v7.2 - Tam Metin Düzeltmesi</p>
+                </div>
+                <div class="header-logo">
+
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="generate-report-btn" class="btn-generate">NİHAİ RAPORU OLUŞTUR (YAZDIR)</button>
+                <button id="export-word-btn" class="btn-word">RAPORU WORD OLARAK İNDİR (.DOC)</button>
+                <div class="backup-controls">
+                    <button id="export-btn" class="btn-control btn-export">Dışa Aktar (Yedekle)</button>
+                    <button id="import-btn" class="btn-control btn-import">İçe Aktar (Yükle)</button>
+                    <input type="file" id="import-file-input" accept=".json">
+                    <button id="clear-storage-btn" class="btn-control btn-clear-storage">Temizle (Yeni)</button>
+                </div>
+            </div>
+
+            <h2 id="info-section-anchor" class="collapsible-header collapsed" style="margin-top: 0;">1. Rapor ve Kurum Bilgileri</h2>
+            <div class="collapsible-content">
+                <div class="info-section">
+                    <h3>Rapor ve Kurum Bilgileri</h3>
+                    <div class="info-grid">
+                        <div><label for="kurumAdi">Denetlenen Kurumun Adı:</label><input type="text" id="kurumAdi" class="save-form-data"></div>
+                        <div><label for="ilceAdi">İlçe Adı:</label><input type="text" id="ilceAdi" class="save-form-data"></div>
+                        <div><label for="kurumKodu">Kurum Kodu:</label><input type="text" id="kurumKodu" class="save-form-data"></div>
+                        <div><label for="kurumWeb">Web Adresi:</label><input type="text" id="kurumWeb" class="save-form-data"></div>
+                        <div><label for="kurumEposta">E-posta Adresi:</label><input type="text" id="kurumEposta" class="save-form-data"></div>
+                        <div><label for="kurumTelefon">Telefon No:</label><input type="text" id="kurumTelefon" class="save-form-data"></div>
+                        <div><label for="ogretmenSayisi">Öğretmen Sayısı:</label><input type="number" id="ogretmenSayisi" class="save-form-data"></div>
+                        <div><label for="digerPersonelSayisi">Diğer Personel Sayısı:</label><input type="number" id="digerPersonelSayisi" class="save-form-data"></div>
+                        <div><label for="kurucu">Kurucu / Kurucu Temsilcisi:</label><input type="text" id="kurucu" class="save-form-data"></div>
+                        <div><label for="kurumAcmaIzni">Kurum Açma İzin Yazısı (Tarih - Sayı):</label><input type="text" id="kurumAcmaIzni" class="save-form-data"></div>
+                        <div><label for="kontenjan">Kurum Kontenjanı:</label><input type="number" id="kontenjan" class="save-form-data"></div>
+                        <div><label for="ucretsizKursiyer">Ücretsiz Kursiyer Sayısı:</label><input type="number" id="ucretsizKursiyer" class="save-form-data"></div>
+                        <div><label for="denetimBaslangic">Denetim Başlangıç Tarihi:</label><input type="date" id="denetimBaslangic" class="save-form-data"></div>
+                        <div><label for="denetimBitis">Denetim Bitiş Tarihi:</label><input type="date" id="denetimBitis" class="save-form-data"></div>
+                        <div><label for="raporTarihi">Rapor Tarihi:</label><input type="date" id="raporTarihi" class="save-form-data"></div>
+                        <div><label for="raporSayi">Rapor Sayı No (E-99726996-663.02-):</label><input type="text" id="raporSayi" class="save-form-data"></div>
+                        <div><label for="mufettis1">Müfettiş 1 (Ad Soyad, Unvan):</label><input type="text" id="mufettis1" class="save-form-data" placeholder="Ör: Kemalettin AKTAŞ, Eğitim Müfettişi"></div>
+                        <div><label for="mufettis2">Müfettiş 2 (Ad Soyad, Unvan):</label><input type="text" id="mufettis2" class="save-form-data" placeholder="Ör: Ali Veli, Eğitim Müfettiş Yardımcısı"></div>
+                        <div><label for="mufettis3">Müfettiş 3 (Ad Soyad, Unvan):</label><input type="text" id="mufettis3" class="save-form-data" placeholder="..., Eğitim Müfettişi"></div>
+
+                    </div>
+<h3 style="margin-top: 25px; margin-bottom: 10px;">Kursiyer Mevcudu</h3>
+<div>
+  <label for="kursiyerMevcudu">Denetim Tarihi itibari ile Kursiyer Mevcudu:</label>
+  <input type="number" id="kursiyerMevcudu" class="save-form-data">
+</div>
+
+<h3 style="margin-top: 25px; margin-bottom: 10px;">Uygulanan Bilim Grubu Programları</h3>
+<div id="program-list-container"></div>
+<button id="add-program-btn">+ Yeni Program Ekle</button>
+
+                    
+                    <h3 style="margin-top: 25px; margin-bottom: 10px;">Yönetici Bilgileri (Raporun 8. Bölümü için)</h3>
+                    <div id="manager-list-container">
+                        </div>
+                    <button id="add-manager-btn">+ Yeni Yönetici Ekle</button>
+                    </div>
+            </div>
+            
+            <div id="checklist-container">
+                </div>
+        </div>
+    </div>
+
+    <div id="live-report-sidebar">
+        <h3>Canlı Rapor (Bulgu/Öneri)</h3>
+        <div id="live-report-content">
+            <div id="live-report-placeholder">
+                "Hayır" olarak işaretlenen maddelerin otomatik oluşturulan "Bulgu" ve "Çözüm Önerisi" metinleri burada görünecektir. Bu metinleri düzenleyebilirsiniz.
+            </div>
+        </div>
+    </div>
+
+    <div id="report-output">
+        <div class="report-page">
+            <div class="report-header">
+                <div class="report-header-grid" >
+                    <div style="text-align: CENTER">T.C.<br>İSTANBUL VALİLİĞİ<br>İL MİLLÎ EĞİTİM MÜDÜRLÜĞÜ</div>
+                </div>
+            </div>
+            
+            <div class="report-title" style="margin-top: 16px;">
+                <span id="rptIlceAdi"></span> İLÇESİ<br>
+                <span id="rptKurumAdi"></span><br>
+                DENETİM RAPORU
+            </div>
+            
+            <table class="report-metadata" border="1">
+                <tbody>
+                    <tr><td>▪ Kurum Kodu</td><td>:</td><td id="rptKurumKodu"></td></tr>
+                    <tr><td>▪ Web adresi</td><td>:</td><td id="rptKurumWeb"></td></tr>
+                    <tr><td>▪ E-posta adresi</td><td>:</td><td id="rptKurumEposta"></td></tr>
+                    <tr><td>▪ Telefon ve Faks No</td><td>:</td><td id="rptKurumTelefon"></td></tr>
+                    <tr><td>▪ Bir önceki denetim tarihi</td><td>:</td><td>İlk Denetim</td></tr>
+                    <tr><td>▪ Öğretmen sayısı</td><td>:</td><td id="rptOgretmenSayisi"></td></tr>
+                    <tr><td>▪ Uzman / usta öğretici sayısı</td><td>:</td><td>-</td></tr>
+                    <tr><td>▪ Diğer personel sayısı</td><td>:</td><td id="rptDigerPersonelSayisi"></td></tr>
+                    <tr><td>▪ Kurucu / Kurucu Temsilcisi</td><td>:</td><td id="rptKurucu"></td></tr>
+                    <tr><td>▪ Kurum açma izin yazısı</td><td>:</td><td id="rptKurumAcmaIzni"></td></tr>
+                    <tr><td>▪ Öğretime başlama izin yazısı</td><td>:</td><td id="rptOgretimBaslamaIzni"></td></tr>
+                    <tr><td>▪ Kurum kontenjanı</td><td>:</td><td id="rptKontenjan"></td></tr>
+                    <tr><td>▪ Ücretsiz okuyan kursiyer sayısı</td><td>:</td><td id="rptUcretsizKursiyer"></td></tr>
+               
+	<tr><td>Denetim Tarihi itibari ile Kursiyer Mevcudu</td><td>:</td>
+
+
+<table class="report-metadata" width:"100%" border="1">
+  <thead>
+    <tr>  <th align="center">Program Adı</th>  <th align="center">:</th>    <th align="center">Kız</th>      <th align="center">Erkek</th>      <th align="center">Genel Toplam</th>    </tr>
+  </thead>
+  <tbody id="rptBilimProgramlari">   <tr><td colspan="5" align="center">(Veri girilmedi)</td></tr>
+  </tbody>
+  <tfoot>  <tr>   <td align="center"><strong>Toplam</strong></td> <th align="center">:</th>      <td id="rptToplamKiz" align="center"></td>      <td id="rptToplamErkek" align="center"></td>      <td id="rptToplamGenel" align="center"></td>   </tr>  </tfoot>
+</table>
+<tr><td>
+ </tbody>
+            </table>
+
+
+
+
+            <div class="report-sayi-konu">
+                <div><span>Sayı</span>: E-99726996-663.02-<span id="rptRaporSayi"></span></div>
+                <div style="text-align: right; float: right;" id="rptRaporTarihi"></div>
+                <div style="clear: both;"></div>
+                <div><span>Konu</span>: <span id="rptKonu"></span></div>
+            </div>
+            <div class="report-recipient" style="text-align: CENTER">
+                İL MİLLİ EĞİTİM MÜDÜRLÜĞÜNE<br>
+                (Eğitim Müfettişleri Başkanlığı)
+            </div>
+            <div class="report-body">
+                <h3>1. GİRİŞ</h3>
+                <p>Bakanlık Makamının <span id="rptGirisTarih">...</span> tarihli ve <span id="rptGirisSayi">...</span> sayılı Oluru ile Teftiş Kurulu Başkanlığının <span id="rptGirisGorevTarih">...</span> tarihli ve <span id="rptGirisGorevSayi">...</span> sayılı görevlendirme emirleri gereğince, <span id="rptGirisIl">...</span> ili <span id="rptGirisIlce">...</span> ilçesinde bulunan <span id="rptGirisKurumAdi">...</span> Kursunun genel denetimi <span id="rptGirisDenetimTarihleri">...</span> tarihleri arasında grubumuzca yapılmış olup, yürütülen genel denetim çalışmalarında kurumun; eğitim-öğretim faaliyetlerine, yönetim faaliyetlerine, mali iş ve işlemler ile il/ilçe millî eğitim müdürlükleri tarafından yapılması gereken çalışmalara ilişkin süreç ve sonuçlar, ilgili kişi ve birimler ile iş birliği içinde, mevzuata, önceden belirlenmiş amaç ve hedeflere göre örneklem yöntemi ile incelenerek değerlendirilmiş ve tespit edilen hususlar aşağıda açıklanmıştır.</p>
+                
+                <h3>2. EĞİTİM-ÖĞRETİM ORTAMLARI</h3>
+                <h4 class="report-subtitle">2.1. Genel Bilgiler</h4>
+                <div id="rptBolum-2.1"></div>
+                <h4 class="report-subtitle">2.2. Fiziki Koşulların Yeterlilik Durumu</h4>
+                <div id="rptBolum-2.2"></div>
+                <h4 class="report-subtitle">2.3. Güvenlik Önlemleri</h4>
+                <div id="rptBolum-2.3"></div> <h4 class="report-subtitle">2.4. Öğretim Materyallerinin Yeterlilik Durumu</h4>
+                <div id="rptBolum-2.4"></div>
+                <h3>2.5. Denetim Bulguları:</h3>
+                <div class="report-bulgular" id="rptBulgular-2"></div>
+                <h3>2.6. Çözüm Önerileri:</h3>
+                <div class="report-bulgular" id="rptOneriler-2"></div>
+                <p class="no-indent">Gerekmektedir.</p>
+
+                <h3>3. EĞİTİM-ÖĞRETİM FAALİYETLERİ</h3>
+                <h4 class="report-subtitle">3.1. Eğitim-Öğretim Etkinlikleri</h4>
+                <div id="rptBolum-3.1"></div>
+                <h4 class="report-subtitle">3.2.1. Kursiyer</h4>
+                <div id="rptBolum-3.2.1"></div>
+                <h3>3.4. Denetim Bulguları:</h3>
+                <div class="report-bulgular" id="rptBulgular-3"></div>
+                <h3>3.5. Çözüm Önerileri:</h3>
+                <div class="report-bulgular" id="rptOneriler-3"></div>
+                <p class="no-indent">Gerekmektedir.</p>
+
+                <h3>4. YÖNETİM FAALİYETLERİ</h3>
+                <h4 class="report-subtitle">4.1. Araştırma ve Planlama</h4>
+                <div id="rptBolum-4.1"></div>
+                <h4 class="report-subtitle">4.2. Örgütleme</h4>
+                <div id="rptBolum-4.2"></div>
+                <h4 class="report-subtitle">4.3. Öğrenci ve Kursiyer işleri</h4>
+                <div id="rptBolum-4.3"></div>
+                <h4 class="report-subtitle">4.4. İnsan kaynakları iş ve işlemleri</h4>
+                <div id="rptBolum-4.4"></div>
+                <h4 class="report-subtitle">4.5. Denetim, İzleme ve Değerlendirme</h4>
+                <div id="rptBolum-4.5"></div>
+                <h4 class="report-subtitle">4.6. İletişim ve Yönetişim</h4>
+                <div id="rptBolum-4.6"></div>
+                <h4 class="report-subtitle">4.7. Bilişim Sistemleri</h4>
+                <div id="rptBolum-4.7"></div>
+                <h4 class="report-subtitle">4.8. Yönetim Faaliyetleri ve Sonuçları</h4>
+                <div id="rptBolum-4.8"></div>
+                <h3>4.12. Denetim Bulguları:</h3>
+                <div class="report-bulgular" id="rptBulgular-4"></div>
+                <h3>4.13. Çözüm Önerileri:</h3>
+                <div class="report-bulgular" id="rptOneriler-4"></div>
+                <p class="no-indent">Gerekmektedir.</p>
+
+                <h3>5. MALİ İŞ VE İŞLEMLER</h3>
+                <h4 class="report-subtitle">5.1. Öğrenim Ücretlerin Tespiti, İlanı ve Tahsili</h4>
+                <div id="rptBolum-5.1"></div>
+                <h4 class="report-subtitle">5.2. Personel Ödemeleri</h4>
+                <div id="rptBolum-5.2"></div>
+                <h4 class="report-subtitle">5.3. Diğer İşlemler</h4>
+                <div id="rptBolum-5.3"></div>
+                <h3>5.4. Denetim Bulguları:</h3>
+                <div class="report-bulgular" id="rptBulgular-5"></div>
+                <h3>5.5. Çözüm Önerileri:</h3>
+                <div class="report-bulgular" id="rptOneriler-5"></div>
+                <p class="no-indent">Gerekmektedir.</p>
+
+                <h3>6. İL/İLÇE MİLLİ EĞİTİM MÜDÜRLÜKLERİ TARAFINDAN YAPILMASI GEREKEN ÇALIŞMALAR</h3>
+                <h4 class="report-subtitle">6.1. Eğitim-Öğretim Faaliyetlerine Yönelik Çalışmalar</h4>
+                <div id="rptBolum-6.1"></div>
+                <h4 class="report-subtitle">6.2. Yönetim İş ve İşlemlerine Yönelik Çalışmalar</h4>
+                <div id="rptBolum-6.2"></div>
+                <h4 class="report-subtitle">6.3. Mali İş ve İşlemlere Yönelik Çalışmalar</h4>
+                <div id="rptBolum-6.3"></div>
+                <h3>6.4. Denetim Bulguları:</h3>
+                <div class="report-bulgular" id="rptBulgular-6"></div>
+                <h3>6.5. Çözüm Önerileri:</h3>
+                <div class="report-bulgular" id="rptOneriler-6"></div>
+                <p class="no-indent">Gerekmektedir.</p>
+
+                <h3>7. İZLEME VE DEĞERLENDİRME</h3>
+                <p><strong>a) Kurumun daha önce yapılan denetimleriyle ilgili olarak;</strong> Bu bölümde; denetim raporunda yer alan tespit ve önerilerin uygulanmasına/giderilmesine yönelik yapılan çalışmalar, gelişim planı hazırlanıp hazırlanmadığı, hazırlanan “gelişim planı” çerçevesinde yürütülen çalışmalar ve düzeyi değerlendirilerek, gelişim planı ile ilgili varsa sorunlar ve çözüm önerilerine yer verilecektir.</p>
+                <p><strong>b) Yapılan mevcut denetimle ilgili olarak;</strong> Bu bölümde; rehberlik ve denetim raporunun kuruma ulaştığı tarihten itibaren bir ay içerisinde, raporda tespit edilen hususlarla ilgili getirilen çözüm önerileri doğrultusunda, “gelişim planı” hazırlanarak il/ilçe millî eğitim müdürlüğüne gönderilmesi, gelişim planının uygulanma/gerçekleştirilme durumunun takibinin, il/ilçe millî eğitim müdürlüklerince yapılması gerektiği belirtilecektir.</p>
+                
+                <h3>8. YÖNETİCİ BİLGİLERİ</h3>
+                <table class="report-table yonetici-tablosu">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">Sıra</th>
+                            <th style="width: 30%;">Adı Soyadı</th>
+                            <th style="width: 20%;">Görevi</th>
+                            <th style="width: 25%;">Çalışma izin onayının tarih ve sayısı</th>
+                            <th style="width: 20%;">Çalışma izin onayının bitim tarihi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="yonetici-table-body">
+                        <tr><td colspan="5">(Veri girilmedi)</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>9. ÖRNEK UYGULAMALAR</h3>
+                <div id="rptBolum-9">
+                    <p>Varsa örnek uygulamalar hakkında ayrıntılı açıklamalara yer verilecektir.</p>
+                </div>
+
+                <h3>10. GENEL DEĞERLENDİRME</h3>
+                <p>Bu bölümde; kurumda yapılan rehberlik ve denetimin hangi önceliklere göre yapıldığı, denetimin planlanan şekilde bitirilip bitirilmediği, denetim planlanan şekilde yapılamadıysa/bitirilmediyse nedenleri ve alınacak önlemler, denetim grubu tarafından açılan bir soruşturma var ise bu duruma ilişkin bilgiler kısaca belirtilmeli, varsa belirtilmesi gereken diğer hususlar ele alınmalıdır.</p>
+                
+                <p class="no-indent">Denetimi gerçekleştiren müfettişler:</p>
+                <div class="report-signature">
+                    <div id="rptMufettis1"></div><div id="rptMufettis2"></div><div id="rptMufettis3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Hata Yakalayıcı
+        window.onerror = function(message, source, lineno, colno, error) {
+            const errorBox = document.getElementById('error-box');
+            if(errorBox) {
+                errorBox.style.display = 'block';
+                errorBox.textContent = 'Bir hata oluştu (Satır ' + lineno + '): ' + message;
+            }
+            console.error("Global hata:", error);
+        };
+
+        // ===== VERİ TABANI (v7.2 - Tam Metin Düzeltmesi) =====
+        // Tüm "..." içeren metinler tam sürümleriyle değiştirildi.
+        const auditData = [
+            { type: 'category', text: '2. EĞİTİM-ÖĞRETİM ORTAMLARI' },
+            { type: 'prose', id: '2.1', label: '2.1. Genel Bilgiler (Raporda görünecek özet metin)' },
+            { type: 'subcategory', text: '2.2. Fiziki Koşulların Yeterlilik Durumu', bulguTitle: '2.2. Fiziki Koşulların Yeterlilik Durumu' },
+            { id: '2.2.1', text: `Derslik, oda ve diğer bölümlerin onaylı yerleşim planına göre düzenlenmesi, (Özel Öğretim Kurumları Standartlar Yönergesi, Md. 6, Md. 27,Geçici Md. 8/5)`, reportCategory: '2', bulguTitle: '2.2. Fiziki Koşulların Yeterlilik Durumu' },
+            { id: '2.2.2', text: `Kurum binasının açılma şartlarını devam ettirmesi ile ilgili hususlar (Özel Öğretim Kurumları Kanunu Md.4; MEB Özel Öğretim Kurumları Yönetmeliği 11/2, 11/3, 12/3; Özel Öğretim Kurumları Standartlar Yönergesi Md.27, 38, Geçici Md.1)`, reportCategory: '2', bulguTitle: '2.2. Fiziki Koşulların Yeterlilik Durumu' },
+            { id: '2.2.3', text: `Kurumda bulunması gereken bölümlere ilişkin hususların incelenmesi, (Özel Öğretim Kurumları Standartlar Yönergesi Md.27), (Değişik: 08.08.2023 tarihli ve 81169114 sayılı Makam Oluru)`, reportCategory: '2', bulguTitle: '2.2. Fiziki Koşulların Yeterlilik Durumu' },
+            { id: '2.2.4', text: `Türk Bayrağı’nın gönderde çekili olması ve Atatürk köşesinin amacına uygun olarak düzenlenmesi durumu (22/9/1983 tarihli ve 2893 sayılı Türk Bayrağı Kanunu ile 25/1/1985 tarihli ve 85/9034 sayılı Bakanlar Kurulu Kararı ile yürürlüğe konulan Türk Bayrağı Tüzüğü; MEB Özel Öğretim Kurumları Yönetmeliği Md. 8)`, reportCategory: '2', bulguTitle: '2.2. Fiziki Koşulların Yeterlilik Durumu' },
+            { id: '2.2.5', text: `Yönetim odaları, derslik ve ders yapılan alanlar ile diğer odalarda; Atatürk resmi, İstiklâl Marşı ve Atatürk’ün Gençliğe Hitabesi, ihtiyaç duyulan donatım malzemesi ile araç gereçlerin bulundurulması (Özel Öğretim Kurumları Standartlar Yönergesi 38, MEB Kurum Tanıtım Yönetmeliği Md.8)`, reportCategory: '2', bulguTitle: '2.2. Fiziki Koşulların Yeterlilik Durumu' },
+            { id: '2.2.6', text: `Kurumun binası ve bahçesinin engellilerin erişilebilirlik standartlarına uygunluk durumu (Özel Öğretim Kurumları Standartlar Yönergesi, Md. 10/3, 10/6, 10/7, MEB Özel Öğretim Kurumları Yönetmeliği Md 11/2)`, reportCategory: '2', bulguTitle: '2.2. Fiziki Koşulların Yeterlilik Durumu' },
+            { id: '2.2.7', text: `Kurum tabelası ile yönlendirme ve adlandırma tabelalarının mevzuata uygun olarak asılması; Türkçe olmayan ve Türkçe bir anlam ifade etmeyen isimlerin kullanılmaması (MEB Özel Öğretim Kurumları Yönetmeliği Md.7; MEB Kurum Tanıtım Yönetmeliği Md. 5, 6,7,12;MEB Kurum Tanıtım Kılavuzu)`, reportCategory: '2', bulguTitle: '2.2. Fiziki Koşulların Yeterlilik Durumu' },
+            { type: 'prose', id: '2.2', label: '2.2. Özet Metin', summaryFor: '2.2. Fiziki Koşulların Yeterlilik Durumu' },
+
+            { type: 'subcategory', text: '2.3. Güvenlik Önlemleri', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.1', text: `Yangından korunma önlemleri ile yangın söndürme tedbirlerinin yeterliliği; elektrik tesisatı ile varsa kalorifer kazanı/kombi/klima ve asansör, ısıtma sistemleri (doğalgazlı, kaloriferli veya elektrikli), havalandırma tesisatının periyodik bakım ve kontrolünün yetkili servislere yaptırılarak belgelendirilmesi, bu sistemlerin bakımlı ve çalışabilir vaziyette olması; deprem, sel gibi afetlerle mücadeleye dönük faaliyetler ve alınan tedbirlerin yeterliliği; kurumun bahçesi varsa temizliği ve bakımı; binada (varsa) yapılan fiziki değişikliklerin onaya bağlanması; bölümlerin yeterlik durumu vb. hususların değerlendirilmesi (Binaların Yangından Korunması Hakkında Yönetmelik; Binaların Kalorifer Dairesinin Tertip ve Düzeni, Kalorifercilik Yeterlik Belgesi Ve Kalorifer Yakma Talimatı; MEB Koruyucu Güvenlik Özel Talimatı; MEB Savunma Sekreterliği çıkışlı 2005/52 sayılı genelge; MEB Yangın Önleme ve Söndürme Yönergesi, MEB 2009/90 Sayılı Genelge, Özel Öğretim Kurumları Standartlar Yönergesi,İş Sağlığı ve Güvenliği Risk Değerlendirmesi Yönetmeliği)`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.t1', text: `(Tablo 1) Kurumun özelliğine göre risk değerlendirme işlemleri yapılmıştır.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t2', text: `(Tablo 1) Kurum binasının özelliğine göre yangın söndürme ile ilgili gerekli önlemler alınmıştır.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t3', text: `(Tablo 1) Kaçış yolu kapıları acil durumlarda kaçış için hazır (yanmaya dayanıklı, panik bar sistemli ve dışa açılır durumda) olarak bulunmaktadır.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t4', text: `(Tablo 1) Bina kaçış merdivenleri ve yolları üzerinde engeller bulunmamaktadır.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t5', text: `(Tablo 1) Tahliye tatbikatı (01-07 Mart Deprem Haftası'nda) yapılarak kayıtları tutulmaktadır.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t6', text: `(Tablo 1) 13 Ekim Dünya Afet Risklerinin Azaltılması Günü'nde afet türlerine ilişkin (deprem hariç) ikaz alarm tatbikatı yapılarak kayıtları tutulmaktadır.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t7', text: `(Tablo 1) Kurumda; 18.03.2018 tarihinde yayımlanan Türkiye Bina Deprem Yönetmeliğinin yürürlüğe girdiği 01.01.2019 tarihinden sonra yaptırılan binalar haricindeki binaların söz konusu yönetmeliğe uygun olup olmadığına ilişkin inceleme yaptırılmıştır.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t8', text: `(Tablo 1) Deprem anında devrilebilecek kitaplık, dolap gibi ağır ve yüksek eşyalar duvara sabitlenmiştir.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t9', text: `(Tablo 1) Elektrik tesisatının periyodik kontrolü yapılmış ve rapora bağlanmıştır.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t10', text: `(Tablo 1) Sivil savunma planı/sivil savunma tedbir planı hazırlanmış ve her yıl güncellenmektedir.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t11', text: `(Tablo 1) "Sabotajlara karşı koruma planı" hazırlanmış ve her yıl güncellenmektedir.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t12', text: `(Tablo 1) Kurumda afet acil durumlarında toplanma alanı belirlenmiştir.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.t13', text: `(Tablo 1) Gerekli malzemelerin bulunduğu ilk yardım dolabı veya çantası bulunmaktadır.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri', isTableItem: true },
+            { id: '2.3.2', text: `Sivil savunma önlemleri, kurumun iç-dış güvenliği ile sabotajlara karşı gerekli önlemlerin alınmış olması (28.12.1988 tarih ve 20033 sayılı R.G.de yayımlanan Sabotajlara Karşı Koruma Yönetmeliği, Md.11)`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.3', text: `Sivil savunma ve itfaiye teşkilatlarından da yararlanılarak, sivil savunma ve yangınlara yönelik ikaz-alârm tatbikatı, deprem haftasında personel tahliye tatbikatının yapılması ve tatbikatlarla ilgili raporların düzenlenmesi durumu (Binaların Yangından Korunması Hakkında Yönetmelik Md. 129; MEB Yangın Söndürme ve Önleme Yönergesi Md. 89)`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.4', text: `Kazan dairesinin tertip ve düzeni, kalorifercilik yeterlik belgesi ve kalorifer yakma talimatının bulundurulması ile Doğalgaz ve LPG tesisatlı kazan dairelerinin işletilmesinde Binaların Yangından Korunması Hakkında Yönetmelik 55. Maddesindeki hükümlerin dikkate alınması,`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.5', text: `Binada/binalarda yangın algılama ve uyarı sistemi bulunması durumu (Binaların Yangından Korunması Hakkında Yönetmelik, Md. 74, 75,161)`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.6', text: `Binada/binalarda yağmurlama sistemi (bina yapı yüksekliği 30,50 metreden fazla olan binalar ile birden fazla katlı bir bina içerisindeki yatılan oda sayısı 100’ü veya yatak sayısı 200’ü geçen pansiyonlarda ve yapı yüksekliği 21.50 m’den fazla olan bütün yataklı tesislerde) bulunması durumu (Binaların Yangından Korunması Hakkında Yönetmelik Madde 96, Madde 165).`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.7', text: `Acil durum kaçış yollarının oluşturulması ve işaretlerle gösterilmesi; doğalgaz kullanılan alanlara (kazan dairesi, mutfak, çay ocağı vb.) güvenlik için gaz alarm detektörünün konulması (2008/71 nolu “Yangın Emniyet Tedbirleri” konulu Genelge, Binaların Yangından Korunması Hakkında Yönetmelik Md. 73)`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.8', text: `Kurum binası ve eklentilerinin Türkiye Bina Deprem Yönetmeliği hükümlerine uygunluk durumu ile kurumda depreme karşı alınan önlemlerin yeterlik durumu (18.3.2018 tarihli ve 30364 mükerrer sayılı R.G’de yayımlanan Türkiye Bina Deprem Yönetmeliği; Özel Öğretim Kurumları Yönetmeliği Md. 5/2-k; Özel Öğretim Kurumları Genel Müdürlüğünün 01.08.2023 tarihli 80736733 sayılı Kurum Binalarının Depreme Karşı Dayanıklılığı konulu ve 10.08.2023 tarihli ve 81311696 sayılı Yönetmelik Değişikliği konulu yazısı; MEB Deprem Kılavuzu, MEB Yangın Önleme ve Söndürme Yönergesi; MEB Destek Hizmetleri Genel Müdürlüğünün 06.09.2024 tarihli ve E-21525590-951.01.05-113454379 sayılı yazısı)`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.9', text: `Kurumda Risk Değerlendirme Ekipleri oluşturulması durumu. (İş Sağlığı ve Güvenliği Risk Değerlendirmesi Yönetmeliği Md.2,6)`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.10', text: `Kurumun özelliğine göre risk değerlendirmelerinin zamanında yenilenmesi ve güncellenmesi durumu. (İş Sağlığı ve Güvenliği Risk Değerlendirmesi Yönetmeliği Md.12)`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.11', text: `Kurumda tehlikenin tanımlanması, risklerin belirlenmesi ve analizi, risk kontrol adımlarının değerlendirilmesi durumu. (İş Sağlığı ve Güvenliği Risk Değerlendirmesi Yönetmeliği Md.8,9,10)`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.12', text: `Kurumda periyodik bakım ve periyodik kontrollerin yapılması durumu. (İş Ekipmanlarının Kullanımında Sağlık ve Güvenlik Şartları Yönetmeliği Md. 5,6)`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.13', text: `Periyodik Kontrol uzmanlarınca yapılan incelemelerin (Akışkan tesisatı, elektrik iç tesisatı, jeneratör, kaldırma ve iletme ekipmanları, kalorifer kazanı, kompresör, topraklama, yangın sistemleri, paratoner periyodik kontrolleri) bir örneğinin kurumda bulunması ve tespitlere ilişkin yapılan çalışmalar.`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { id: '2.3.14', text: `Milli Eğitim Bakanlığı Destek Hizmetleri Genel Müdürlüğünün 03.02.2025 tarih ve 125646034 sayılı “Okullarda Sağlık ve Güvenlik Şartlarının Denetim Uygulamaları ve Takip Süreci” konulu yazıları kapsamında yapılan çalışmaların incelenmesi,`, reportCategory: '2', bulguTitle: '2.3. Güvenlik Önlemleri' },
+            { type: 'prose', id: '2.3', label: '2.3. Özet Metin', summaryFor: '2.3. Güvenlik Önlemleri' },
+
+            { type: 'subcategory', text: '2.4. Öğretim Materyalleri', bulguTitle: '2.4. Öğretim Materyallerinin Yeterlilik Durumu' },
+            { id: '2.4.1', text: `Ders araç-gereçlerinin kurumun amaç ve ihtiyaçları ile uygulanmakta olan programlara ait yeterlilik durumu (Özel Öğretim Kurumları Kanunu Md.3; Özel Öğretim Kurumları Standartlar Yönergesi Md.38, uygulanan programla ilgili Talim Terbiye Kurulu Kararları).`, reportCategory: '2', bulguTitle: '2.4. Öğretim Materyallerinin Yeterlilik Durumu' },
+            { type: 'prose', id: '2.4', label: '2.4. Özet Metin', summaryFor: '2.4. Öğretim Materyallerinin Yeterlilik Durumu' },
+
+            { type: 'category', text: '3. EĞİTİM-ÖĞRETİM FAALİYETLERİ' },
+            { type: 'subcategory', text: '3.1. Eğitim-Öğretim Etkinlikleri', bulguTitle: '3.1. Eğitim-Öğretim Etkinlikleri' },
+            { id: '3.1.1', text: `Özel öğretim kursları çerçeve programına uygun olarak Genel Müdürlükçe hazırlanıp internet sitesinde yayınlanan öğretim programının uygulanmasına ilişkin hususların incelenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.5/2-f; 13/1-c,13/5, 46/3)`, reportCategory: '3', bulguTitle: '3.1. Eğitim-Öğretim Etkinlikleri' },
+            { id: '3.1.2', text: `Özel öğretim kurslarında; ortaöğretim okulu öğrencilerinin öğrenim gördüğü derslikleri ile mezun kursiyerlerin öğrenim gördüğü dersliklerinin kursun ayrı katlarında ya da aynı binanın farklı bloklarında oluşturulma durumu (Özel Öğretim Kurumları Standartlar Yönergesi Md.27/1-ç)`, reportCategory: '3', bulguTitle: '3.1. Eğitim-Öğretim Etkinlikleri' },
+            { id: '3.1.3', text: `Sınıf mevcutları ve grupların oluşturulmasına ilişkin hususların incelenmesi, (MEB Özel Öğretim Kurumları Yönetmeliği Md.48/2)`, reportCategory: '3', bulguTitle: '3.1. Eğitim-Öğretim Etkinlikleri' },
+            { id: '3.1.4', text: `Kurs çalışma takvimini ve haftalık çalışma saatlerini gösteren çizelgelerin usulünce hazırlanması ve uygulanmasına ilişkin hususların incelenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.10/4,6,7,9)`, reportCategory: '3', bulguTitle: '3.1. Eğitim-Öğretim Etkinlikleri' },
+            { id: '3.1.5', text: `Onaylanan öğretim programında yer alan kazanımların ölçülmesi amacıyla açık uçlu soruların da yer aldığı seviye belirleme ve deneme sınavlarının usulünce yapılması ve seviye belirleme ve deneme sınavlarının analizlerinin yapılarak öğrencilere/kursiyerlere geri bildirimde bulunulması, (MEB Özel Öğretim Kurumları Yönetmeliği Md.46/9)`, reportCategory: '3', bulguTitle: '3.1. Eğitim-Öğretim Etkinlikleri' },
+            { id: '3.1.6', text: `Rehberlik faaliyetlerinin amacına uygun olarak yapılmasına ilişkin hususların incelenmesi (Millî Eğitim Bakanlığı Rehberlik ve Psikolojik Danışma Hizmetleri Yönetmeliği)`, reportCategory: '3', bulguTitle: '3.1. Eğitim-Öğretim Etkinlikleri' },
+            { type: 'prose', id: '3.1', label: '3.1. Özet Metin', summaryFor: '3.1. Eğitim-Öğretim Etkinlikleri' },
+
+            { type: 'subcategory', text: '3.2.1. Kursiyer', bulguTitle: '3.2.1. Kursiyer' },
+            { id: '3.2.1.1', text: `Devam devamsızlık durumuna ilişkin hususların incelenmesi (Millî Eğitim Bakanlığı Özel Öğretim Kurumları Yönetmeliği Md.10/8)`, reportCategory: '3', bulguTitle: '3.2.1. Kursiyer' },
+            { id: '3.2.1.2', text: `Ücretsiz ve burslu kursiyer ile ilgili hususların incelenmesi (5580 sayılı Özel Öğretim Kurumları Kanunun 13. maddesi ile MEB Özel Öğretim Kurumları Yönetmeliğinin 57, 58, 59, 60, 61, 62 ve 63. Maddeleri)`, reportCategory: '3', bulguTitle: '3.2.1. Kursiyer' },
+            { id: '3.2.1.3', text: `Disiplin durumuna ilişkin hususların incelenmesi (MEB Özel Okullar Dışındaki Özel Öğretim Kurumlarında Öğrenim Görenlerden Okul Öğrencisi Olmayanlarla İlgili Disiplin Yönergesi)`, reportCategory: '3', bulguTitle: '3.2.1. Kursiyer' },
+            { type: 'prose', id: '3.2.1', label: '3.2.1. Özet Metin', summaryFor: '3.2.1. Kursiyer' },
+
+            { type: 'category', text: '4. YÖNETİM FAALİYETLERİ' },
+            { type: 'subcategory', text: '4.1. Araştırma ve Planlama', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.1', text: `Kurumda görevlendirilecek eğitim personeli ve diğer personele ilişkin hususların yerine getirilmesi durumu (MEB Özel Öğretim Kurumları Yönetmeliği Md. 39,40,41 ve Geçici Madde 27/2 )`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.2', text: `Personel arasında iş bölümünün yapılması (MEB Özel Öğretim Kurumları Yönetmeliği Md. 32/1-ç)`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.3', text: `“15 Temmuz Demokrasi ve Millî Birlik Günü” kapsamında yapılan etkinliklere ilişkin hususların incelenmesi (6752 sayılı Kanunun Md. 2/c, MEB 2016/18 sayılı Genelge),`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.4', text: `Günlük çalışmaların 07.00 ile 23.00 saatleri arasında yapılması, ders saati süresinin 45 dakika, uygulamalı derslerin blok hâlinde 90 dakika olarak yapılabilmesi, zorunlu eğitim çağındaki öğrencilerin devam ettiği programlarda eğitimlerin 07.00 ile 21.00 saatleri arasında yapılması (MEB Özel Öğretim Kurumları Yönetmeliği Md.10/6)`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.5', text: `Tabela, reklam, ilan ve her türlü iş ve işlemlerinde sadece kurum açma izni ile işyeri açma ve çalışma ruhsatında yer alan kurum adının ve/veya kısaltmasının kullanılması (MEB Özel Öğretim Kurumları Yönetmeliği Md.7/4)`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.6', text: `Kurum açma izni ile iş yeri açma ve çalışma ruhsatının kurumda bulundurma durumu (MEB Özel Öğretim Kurumları Yönetmeliği Md.5,6)`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.7', text: `Devir, kurucu temsilcisi değişikliği, kurumun nakli ve program ilavesi ile ilgili iş ve işlemlerin usulünce yerine getirilmesine ilişkin hususların incelenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.5, 13, 14, 16)`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.8', text: `Kurumda genel kontenjan veya yerleşim planında değişiklik yapılması durumunda başvuru ve onay işlemlerinin gerçekleştirilmesine ilişkin hususların incelenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.5,17),`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.9', text: `Program iptali işlemlerinin usulünce yerine getirilmesine ilişkin hususların incelenmesi yapılması (MEB Özel Öğretim Kurumları Yönetmeliği Md.20/3),`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.10', text: `Kurum adında sonradan bir değişiklik yapılmış ise kurum açma izni ile iş yeri açma ve çalışma ruhsatını veren merciin onayının alınması (MEB Özel Öğretim Kurumları Yönetmeliği Md.7/2)`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.11', text: `Kurucusu tüzel kişilik olan kurumlarda kurucu temsilcisi değişikliğine ilişkin hususların mevzuata uygun olarak yapılması (MEB Özel Öğretim Kurumları Yönetmeliği Md.14/6-7)`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { id: '4.1.12', text: `Kurumda kontenjan ve/veya yerleşim planında yapılacak değişikliklere ilişkin hususların mevzuatına uygun olarak yerine getirilmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.17)`, reportCategory: '4', bulguTitle: '4.1. Araştırma ve Planlama' },
+            { type: 'prose', id: '4.1', label: '4.1. Özet Metin', summaryFor: '4.1. Araştırma ve Planlama' },
+
+            { type: 'subcategory', text: '4.2. Örgütleme', bulguTitle: '4.2. Örgütleme' },
+            { id: '4.2.1', text: `Kurumda ücretsiz okutulacak kursiyerlerin başvuru işlemleri ile başvuruları değerlendirmek üzere “Değerlendirme Kurulunun” oluşturulması ve görevlerini usulünce yerine getirmesine ilişkin hususların incelenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md. 59)`, reportCategory: '4', bulguTitle: '4.2. Örgütleme' },
+            { id: '4.2.2', text: `Kursiyerlerin disiplin işlemlerine ilişkin, disiplin kurulunun oluşturulması ve mevzuatına uygun olarak çalışmalarını yürütmesine ilişkin hususların incelenmesi (MEB Özel Okullar Dışındaki Özel Öğretim Kurumlarında Öğrenim Görenlerden Okul Öğrencisi Olmayanlarla İlgili Disiplin Yönergesi),`, reportCategory: '4', bulguTitle: '4.2. Örgütleme' },
+            { type: 'prose', id: '4.2', label: '4.2. Özet Metin', summaryFor: '4.2. Örgütleme' },
+
+            { type: 'subcategory', text: '4.3. Öğrenci ve Kursiyer işleri', bulguTitle: '4.3. Öğrenci ve Kursiyer işleri' },
+            { id: '4.3.1', text: `Kuruma kayıt sırasında kursiyerin T.C. kimlik numarası, adı soyadı ve doğum tarihinin ve öğretim programının özelliklerine göre diğer belgelerin istenmesi, kursiyer kayıtlarının MEBBİS’te oluşturulan elektronik modüller üzerinden gerçekleştirilmesine ilişkin hususların incelenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.51/7-11-12)`, reportCategory: '4', bulguTitle: '4.3. Öğrenci ve Kursiyer işleri' },
+            { id: '4.3.2', text: `Kurumda ücretsiz okutulacak kursiyerler ile ilgili iş ve işlemlerinin mevzuata uygun yürütülmesi, ücretsiz okutulacak kursiyerlerin tespitinde, harp veya vazife malulü sayılanların ilk ve orta öğrenim çağındaki çocukları ile haklarında koruma, bakım veya barınma kararı verilen çocuklara öncelik verilmesine ilişkin hususların incelenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md. 57, 58, 59)`, reportCategory: '4', bulguTitle: '4.3. Öğrenci ve Kursiyer işleri' },
+            { id: '4.3.3', text: `Kurum tarafından burs verme şartlarının, bursun miktarının, burs süresinin ve burs verilecek öğrenci ve kursiyer sayısı ile bursun hangi durumlarda kesileceğinin belirlenmesi, söz konusu işlemlerin il millî eğitim müdürlüğüne bilgi verilerek uygulanması (MEB Özel Öğretim Kurumları Yönetmeliği Md.62, 63/2)`, reportCategory: '4', bulguTitle: '4.3. Öğrenci ve Kursiyer işleri' },
+            { id: '4.3.4', text: `Kursiyerlerin devam devamsızlıklarına ilişkin hususların incelenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.10/8)`, reportCategory: '4', bulguTitle: '4.3. Öğrenci ve Kursiyer işleri' },
+            { id: '4.3.5', text: `Lise ve dengi okul öğrencilerinin hafta içi günleri okul saatleri dışında ve/veya hafta sonu kursa devam etme durumu (MEB Özel Öğretim Kurumları Yönetmeliği Md.51/12)`, reportCategory: '4', bulguTitle: '4.3. Öğrenci ve Kursiyer işleri' },
+            { type: 'prose', id: '4.3', label: '4.3. Özet Metin', summaryFor: '4.3. Öğrenci ve Kursiyer işleri' },
+
+            { type: 'subcategory', text: '4.4. İnsan kaynakları iş ve işlemleri', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { id: '4.4.1', text: `Kurs merkezinin onay aldığı bilim grubuna uygun öğretmen görevlendirilmesine ilişkin hususların incelenmesi (Özel Öğretim Kurumları Genel Müdürlüğünün 25.08.2017 tarihli ve E.12826002 sayılı yazısı)`, reportCategory: '4', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { id: '4.4.2', text: `Çalışma izin tekliflerinin; genel müdür, genel müdür yardımcısı ve müdürler için kurucular veya kurucu temsilcileri; yöneticiler dışındaki personel için ise müdür tarafından yapılması ve çalışma izin onaylarının alınmasına ilişkin hususların incelenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.26/1,3),`, reportCategory: '4', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { id: '4.4.3', text: `Bakanlıkça ön izin belgesi verilen yabancı uyrukluların çalışma izinleriyle ilgili işlemlerin, 28/7/2016 tarihli ve 6735 sayılı Uluslararası İşgücü Kanunu ve 2/2/2022 tarihli ve 31738 sayılı Resmî Gazete’de yayımlanan Uluslararası İşgücü Kanunu Uygulama Yönetmeliği hükümlerine göre yürütülmesi durumu, (MEB Özel Öğretim Kurumları Yönetmeliği Md.26/2),`, reportCategory: '4', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { id: '4.4.4', text: `Kurum müdürlüğünce, çalışma izni verilmesi istenen eğitim personeli ile diğer personele ilişkin işlemlerin mevzuatına uygun olarak yerine getirilmesi, valilikten çalışma izni alınmadan personelin işe başlatılmaması (MEB Özel Öğretim Kurumları Yönetmeliği Md.26/3),`, reportCategory: '4', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { id: '4.4.5', text: `Eğitim personelinden görevine devam edeceklerden çalışma izni uzatma onaylarının toplu olarak alınmasına ilişkin işlemlerin mevzuatına uygun olarak yerine getirilmesine ilişkin hususların incelenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.27),`, reportCategory: '4', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { id: '4.4.6', text: `Kurumda yönetici ve eğitim personeline, mevzuatına uygun olarak ücretli ek ders görevi verilmesine ilişkin hususların incelenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.26/6, 40),`, reportCategory: '4', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { id: '4.4.7', text: `Kurumun öğretime başladığı tarihten itibaren mevcut ders saati sayısının, kuruluş sırasında üçte biri, kuruluşundan üç yıl sonra da en az üçte ikisinin asıl görevi bu kurumlarda olan öğretmen, uzman veya usta öğreticiler tarafından okutulması hususuna ilişkin işlemlerin incelenmesi (MEB Özel Öğretim Kurumları Kanunu, Md. 8)`, reportCategory: '4', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { id: '4.4.8', text: `4857 sayılı İş Kanununun hükümlerine göre kurucu veya kurucu temsilcileri ile eğitim personeli arasındaki iş sözleşmesinin yapılması (MEB Özel Öğretim Kurumları Yönetmeliği Md.43),`, reportCategory: '4', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { id: '4.4.9', text: `Görevden ayrılan eğitim personeli ile diğer personelin görevinden ayrılışı ile ilgili işlemlerin usulüne uygun olarak yerine getirilmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md. 44)`, reportCategory: '4', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { id: '4.4.10', text: `Kurumlarda görev yapan eğitim personeli ile diğer personele millî eğitim müdürlüğünce soğuk mühür ile onaylanmış kimlik kartının düzenlenmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.65)`, reportCategory: '4', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { id: '4.4.11', text: `(Varsa) Kantinde ve mutfakta çalışanların gerekli hijyen eğitimi aldıklarını gösterir belgenin bulunması ve yönetmelikte belirtilen hastalıkların bulunmadığına ilişkin raporunun alınması (Umumi Hıfzıssıhha Kanunu Md. 126,127; Hijyen Eğitimi Yönetmeliği Md. 5,9,10; Gıda, Tarım ve Hayvancılık Bakanlığı tarafından yürütülen Okul Kantinlerine Dair Özel Hijyen Kuralları Yönetmeliği; Millî Eğitim Bakanlığı “Okul Kantinlerinde Satılacak Gıdalar ve Eğitim Kurumlarındaki Gıda İşletmelerinin Hijyen Yönünden Denetlenmesi” konulu 10.11.2020 tarihli ve 16476274 sayılı 2020/8 nolu Genelge)`, reportCategory: '4', bulguTitle: '4.4. İnsan kaynakları iş ve işlemleri' },
+            { type: 'prose', id: '4.4', label: '4.4. Özet Metin', summaryFor: '4.4. İnsan kaynakları iş ve işlemleri' },
+
+            { type: 'subcategory', text: '4.5. Denetim, İzleme ve Değerlendirme', bulguTitle: '4.5. Denetim, İzleme ve Değerlendirme' },
+            { id: '4.5.1', text: `Programların amacına uygun şekilde yürütülmesi, başarının arttırılması, eğitimin kaliteli olarak sürdürülmesi için gerekli önlemlerin alınması (MEB Özel Öğretim Kurumları Yönetmeliği Md.32/1-a)`, reportCategory: '4', bulguTitle: '4.5. Denetim, İzleme ve Değerlendirme' },
+            { id: '4.5.2', text: `(Varsa) kantin hizmetlerinin izlenmesi (Millî Eğitim Bakanlığı “Okul Kantinlerinde Satılacak Gıdalar ve Eğitim Kurumlarındaki Gıda İşletmelerinin Hijyen Yönünden Denetlenmesi” konulu 10.11.2020 tarihli ve 16476274 sayılı 2020/8 nolu Genelge)`, reportCategory: '4', bulguTitle: '4.5. Denetim, İzleme ve Değerlendirme' },
+            { id: '4.5.3', text: `İş Sağlığı ve Güvenliği konulu 2014/16 sayılı Genelge hükümleri doğrultusunda gerekli iş ve işlemlerin yapılması`, reportCategory: '4', bulguTitle: '4.5. Denetim, İzleme ve Değerlendirme' },
+            { id: '4.5.4', text: `Millî Eğitim Bakanlığı ile diğer Bakanlıkların denetim elamanlarınca yapılan denetimler sonrasında getirilen tekliflerin yerine getirilme durumu,`, reportCategory: '4', bulguTitle: '4.5. Denetim, İzleme ve Değerlendirme' },
+            { type: 'prose', id: '4.5', label: '4.5. Özet Metin', summaryFor: '4.5. Denetim, İzleme ve Değerlendirme' },
+
+            { type: 'subcategory', text: '4.6. İletişim ve Yönetişim', bulguTitle: '4.6. İletişim ve Yönetişim' },
+            { id: '4.6.1', text: `Kuruma ait tanıtıcı ve kurum faaliyetlerine ilişkin güncel istatistik bilgilerinin yer aldığı internet sitesinin oluşturulması (MEB Bilgi İşlem Grup Başkanlığının 04/10/2013 tarihli ve 2846431 sayılı yazısı)`, reportCategory: '4', bulguTitle: '4.6. İletişim ve Yönetişim' },
+            { id: '4.6.2', text: `Kurumda kullanılan evrakın saklanmasında Devlet Arşiv Hizmetleri Hakkında Yönetmelik hükümlerinin uygulanması (MEB Özel Öğretim Kurumları Yönetmeliği Md.66)`, reportCategory: '4', bulguTitle: '4.6. İletişim ve Yönetişim' },
+            { id: '4.6.3', text: `Resmi yazışma kurallarına uyulması durumu (09/06/2020 tarih ve 2646 Sayılı Cumhurbaşkanlığı Kararı ile 10/06/2020 tarihli ve 31151 sayılı Resmi Gazetede yayımlanan “Resmi Yazışmalarda Uygulanacak Usul ve Esaslar Hakkında Yönetmelik ve Kılavuzu),`, reportCategory: '4', bulguTitle: '4.6. İletişim ve Yönetişim' },
+            { type: 'prose', id: '4.6', label: '4.6. Özet Metin', summaryFor: '4.6. İletişim ve Yönetişim' },
+
+            { type: 'subcategory', text: '4.7. Bilişim Sistemleri', bulguTitle: '4.7. Bilişim Sistemleri' },
+            { id: '4.7.1', text: `Kullanıcı gruplarının oluşturulması, yetkilendirilmesi ve kişisel verilerin güvenliğinin sağlanması durumu (MEB Bilgi ve Sistem Güvenliği Yönergesi),`, reportCategory: '4', bulguTitle: '4.7. Bilişim Sistemleri' },
+            { id: '4.7.2', text: `MEBBİS veri tabanı altında bulunan ilgili modüllere bilgi girişinin zamanında ve doğru şekilde yapılması durumu (Özel Öğretim Kursları Modülü, Meis Modülü, Özel Öğretim Kurumları Modülü, e-Yaygın Modülü),`, reportCategory: '4', bulguTitle: '4.7. Bilişim Sistemleri' },
+            { type: 'prose', id: '4.7', label: '4.7. Özet Metin', summaryFor: '4.7. Bilişim Sistemleri' },
+
+            { type: 'subcategory', text: '4.8. Yönetim Faaliyetleri ve Sonuçları', bulguTitle: '4.8. Yönetim Faaliyetleri ve Sonuçları' },
+            { id: '4.8.1', text: `Kurumun eğitim personelini yetiştirmek üzere gerekli tedbirleri alması, ayrıca eğitim personelinin Bakanlıkça açılan hizmet içi eğitim faaliyetlerinden yararlandırılması (MEB Özel Öğretim Kurumları Yönetmeliği Md.36/1)`, reportCategory: '4', bulguTitle: '4.8. Yönetim Faaliyetleri ve Sonuçları' },
+            { id: '4.8.2', text: `Kurucu ve tüm üyeleri kurumun kurucusu olan; oda, dernek, birlik veya vakıflarca kurumdaki personele hizmetiçi eğitim faaliyetleri düzenleyebilmesi için valiliğe bilgi verilmesi, kurumların Bakanlıktan izin alınmış olan özel hizmet içi eğitim merkezlerinden hizmet satınalınması (MEB Özel Öğretim Kurumları Yönetmeliği Md.36/2)`, reportCategory: '4', bulguTitle: '4.8. Yönetim Faaliyetleri ve Sonuçları' },
+            { id: '4.8.3', text: `Gerçekleştirilen/devam eden projeler`, reportCategory: '4', bulguTitle: '4.8. Yönetim Faaliyetleri ve Sonuçları' },
+            { type: 'prose', id: '4.8', label: '4.8. Özet Metin', summaryFor: '4.8. Yönetim Faaliyetleri ve Sonuçları' },
+
+            { type: 'category', text: '5. MALİ İŞ VE İŞLEMLER' },
+            { type: 'subcategory', text: '5.1. Öğrenim Ücretlerin Tespiti, İlanı ve Tahsili', bulguTitle: '5.1. Öğrenim Ücretlerin Tespiti, İlanı ve Tahsili' },
+            { id: '5.1.1', text: `Kursiyer ücretlerinin tespiti, ilanı, tahsili ve iadesi ile ilgili iş ve işlemlerin yerine getirilmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.53, 54, 55, 56)`, reportCategory: '5', bulguTitle: '5.1. Öğrenim Ücretlerin Tespiti, İlanı ve Tahsili' },
+            { id: '5.1.2', text: `Kurumda ücretsiz olarak okutulacak bireylerin belirlenmesi ve kurumun ücretsiz okutmakla yükümlü olduğu asgari öğrenci sayısının mevzuata uygunluk durumu (5580 sayılı Özel Öğretim Kurumları Kanunun 13. Maddesi ile MEB Özel Öğretim Kurumları Yönetmeliğinin 57, 58, 59, 60, 61, Özel Öğretim Kurumları Genel Müdürlüğünün “Şehit veya Gazi Çocuğu” Konulu 06/10/2016 tarih ve 10918715 sayılı yazısı)`, reportCategory: '5', bulguTitle: '5.1. Öğrenim Ücretlerin Tespiti, İlanı ve Tahsili' },
+            { id: '5.1.3', text: `Kurumun amaçlarına uygun tanıtıcı mahiyette reklam ve ilan vermesi, reklam ve ilanlarında gerçeğe aykırı beyanda bulunulmaması, televizyonda reklam ve ilan verilmemesi (Özel Öğretim Kurumları Kanunu Md.11, MEB Özel Öğretim Kurumları Yönetmeliği Md.7/4, 62/6, Ek Md.4)`, reportCategory: '5', bulguTitle: '5.1. Öğrenim Ücretlerin Tespiti, İlanı ve Tahsili' },
+            { type: 'prose', id: '5.1', label: '5.1. Özet Metin', summaryFor: '5.1. Öğrenim Ücretlerin Tespiti, İlanı ve Tahsili' },
+
+            { type: 'subcategory', text: '5.2. Personel Ödemeleri', bulguTitle: '5.2. Personel Ödemeleri' },
+            { id: '5.2.1', text: `Kurumda çalışan personele yönelik özlük hakları ve sorumlulukların yerine getirilmesine ilişkin hususların incelenmesi (Özel Öğretim Kurumları Kanunu Md.9, MEB Özel Öğretim Kurumları Yönetmeliğinin 42, 43, 44,45. Maddeleri)`, reportCategory: '5', bulguTitle: '5.2. Personel Ödemeleri' },
+            { id: '5.2.2', text: `Personelin; ücret ve diğer ödeme işlemlerinin usulünce yerine getirilmesi, personel ücret bordro listeleri ile bankadan yatan ücret tutarları arasında mutabakatın sağlanması (213 Sayılı Vergi Usul Kanunu Md. 238. 4857 Sayılı İş Kanunu Md. 37),`, reportCategory: '5', bulguTitle: '5.2. Personel Ödemeleri' },
+            { id: '5.2.3', text: `Personelin SGK primleri ile ilgili işlemlerinin usulünce yerine getirilmesi, (5510 Sayılı Sosyal Sigortalar ve Genel Sağlık Sigortası Kanunu, Sosyal Sigorta İşlemleri Yönetmeliği, Kamu İdarelerinin Denetim Elemanlarınca Yapılacak Tespitler Hakkında Yönetmelik),`, reportCategory: '5', bulguTitle: '5.2. Personel Ödemeleri' },
+            { id: '5.2.4', text: `Maaş bordrolarının tasnifli bir şekilde dosyalanması, bordrolarda gösterilen ücretlerin sözleşmelerdekine uygun olması, maaş ve ücretlerin düzenli olarak ödenmesi; tam çalışanların sigorta primlerinin 30 gün üzerinden yatırılması (Sosyal Sigorta İşlemleri Yönetmeliği Md.100)`, reportCategory: '5', bulguTitle: '5.2. Personel Ödemeleri' },
+            { type: 'prose', id: '5.2', label: '5.2. Özet Metin', summaryFor: '5.2. Personel Ödemeleri' },
+
+            { type: 'subcategory', text: '5.3. Diğer İşlemler', bulguTitle: '5.3. Diğer İşlemler' },
+            { id: '5.3.1', text: `Yapılan harcamalara ilişkin muhasebe kayıtlarının tutulması,`, reportCategory: '5', bulguTitle: '5.3. Diğer İşlemler' },
+            { id: '5.3.2', text: `Ödeme belgelerinin (öğrenci ücretleri ile ilgili fatura, makbuz vb.) düzenlenmesi, süresi içerisindeki kayıtlara geçirilmesi ve muhafazası ile ilgili işlemlerin usulüne uygun olarak yapılması`, reportCategory: '5', bulguTitle: '5.3. Diğer İşlemler' },
+            { id: '5.3.3', text: `Muhtasar ve KDV beyannamelerinin düzenli olarak verilmesi`, reportCategory: '5', bulguTitle: '5.3. Diğer İşlemler' },
+            { id: '5.3.4', text: `(Varsa) kantinde yazarkasa kullanılması (3100 sayılı Katma Değer Vergisi Mükelleflerinin Ödeme Kaydedici Cihazları Kullanma Mecburiyeti Hakkında Kanun)`, reportCategory: '5', bulguTitle: '5.3. Diğer İşlemler' },
+            { id: '5.3.5', text: `Kurumlarda görev yapan eğitim personeli ile diğer personelin, göreve başlatılmadan önce SGK’ya bildirilmesi, çalışanların işe giriş bildirgelerinin dosyalarında muhafaza edilmesi, ayrılan personelin ayrıldığı döneme kadar olan sigorta primlerinin eksiksiz olarak yatırılması, aylık sigortalı hizmet listelerinin SGK’ya bildirilmesi (MEB Özel Öğretim Kurumları Yönetmeliği Md.42)`, reportCategory: '5', bulguTitle: '5.3. Diğer İşlemler' },
+            { type: 'prose', id: '5.3', label: '5.3. Özet Metin', summaryFor: '5.3. Diğer İşlemler' },
+
+            { type: 'category', text: '6. İL/İLÇE MİLLİ EĞİTİM MÜD. YAPILMASI GEREKEN ÇALIŞMALAR' },
+            { type: 'subcategory', text: '6.1. Eğitim-Öğretim Faaliyetlerine Yönelik Çalışmalar', bulguTitle: '6.1. Eğitim-Öğretim Faaliyetlerine Yönelik Çalışmalar' },
+            { id: '6.1.1', text: `MEB Özel Öğretim Kurumları Genel Müdürlüğü çıkışlı 27/10/2016 tarihli ve E.12079876 sayılı ve 03/10/2017 tarihli ve E.15710928 sayılı “özel öğretim kurumlarının denetimi” konulu yazılarında yer alan hususların yerine getirilmesi,`, reportCategory: '6', bulguTitle: '6.1. Eğitim-Öğretim Faaliyetlerine Yönelik Çalışmalar' },
+            { type: 'prose', id: '6.1', label: '6.1. Özet Metin', summaryFor: '6.1. Eğitim-Öğretim Faaliyetlerine Yönelik Çalışmalar' },
+
+            { type: 'subcategory', text: '6.2. Yönetim İş ve İşlemlerine Yönelik Çalışmalar', bulguTitle: '6.2. Yönetim İş ve İşlemlerine Yönelik Çalışmalar' },
+            { id: '6.2.1', text: `Kurumun açılış, nakil, kapanış, program ilavesi ve iptali, yerleşim, kontenjan, devir ve kurucu temsilcisi değişikliği, kurum tadilatı, kurum açma izni ile iş yeri açma ve çalışma ruhsatının iptali ile idari para cezaları, eğitim-öğretim faaliyetlerine ara vermeye ilişkin iş ve işlemlerinin yerine getirilmesi durumu (MEB Özel Öğretim Kurumları Yönetmeliği Md. 5, 9, 9/B, 13, 14, 16, 17, 20, 44, 67/A, 67/B)`, reportCategory: '6', bulguTitle: '6.2. Yönetim İş ve İşlemlerine Yönelik Çalışmalar' },
+            { id: '6.2.2', text: `Kurum müdürü, eğitim personeli ve diğer çalışanlar için çalışma izin onayı alınması, uzatılması, iş sözleşmelerinin uygunluğu ile kurumdan ayrılma işlemlerinin mevzuatına uygun olarak yapılmasına ilişkin görevlerin yerine getirilmesi, (Özel Eğitim Kurumları Yönetmeliği Md. 26, 27, 43)`, reportCategory: '6', bulguTitle: '6.2. Yönetim İş ve İşlemlerine Yönelik Çalışmalar' },
+            { id: '6.2.3', text: `Kurumda görev yapan eğitim personeli ile diğer personele kurum tarafından düzenlenen personel kimlik kartlarının soğuk mühür ile onaylanması, görevden ayrılan personelin kimlik kartı ile kapatılan kurumların mühür ve evraklarının geri alınması, (MEB Özel Öğretim Kurumları Yönetmeliği Md.65)`, reportCategory: '6', bulguTitle: '6.2. Yönetim İş ve İşlemlerine Yönelik Çalışmalar' },
+            { id: '6.2.4', text: `Kurumların verdiği beyanların doğruluğunun il/ilçe millî eğitim müdürlüğünce tespit edilmesi, (Özel Öğretim Kurumları Yönetmeliği Md. 69)`, reportCategory: '6', bulguTitle: '6.2. Yönetim İş ve İşlemlerine Yönelik Çalışmalar' },
+            { type: 'prose', id: '6.2', label: '6.2. Özet Metin', summaryFor: '6.2. Yönetim İş ve İşlemlerine Yönelik Çalışmalar' },
+
+            { type: 'subcategory', text: '6.3. Mali İş ve İşlemlere Yönelik Çalışmalar', bulguTitle: '6.3. Mali İş ve İşlemlere Yönelik Çalışmalar' },
+            { id: '6.3.1', text: `Kurum tarafından ücret ilanlarının, ocak ayı sonuna kadar Millî Eğitim Bakanlığı Bilişim Sistemleri (MEBBİS) programına işlenerek alınan çıktının bir örneğinin süresi içinde verilmesi durumunun takibi (ÖÖKY, Md. 54),`, reportCategory: '6', bulguTitle: '6.3. Mali İş ve İşlemlere Yönelik Çalışmalar' },
+            { id: '6.3.2', text: `Eğitim ücretinin kurum adına açılan ve Bakanlığa/valiliğe bildirilen banka hesap numarasına yatırılarak tahsil edilmesi, (ÖÖKY, Md. 55/3),`, reportCategory: '6', bulguTitle: '6.3. Mali İş ve İşlemlere Yönelik Çalışmalar' },
+            { id: '6.3.3', text: `Ücretsiz okutulacak kursiyerlerin oranı ve yapılacak işlemlerin takibi (Millî Eğitim Bakanlığı İl Ve İlçe Millî Eğitim Müdürlükleri Yönetmeliği, Md.16/e)`, reportCategory: '6', bulguTitle: '6.3. Mali İş ve İşlemlere Yönelik Çalışmalar' },
+            { type: 'prose', id: '6.3', label: '6.3. Özet Metin', summaryFor: '6.3. Mali İş ve İşlemlere Yönelik Çalışmalar' }
+        ];
+
+        // JavaScript Kodu Başlangıcı
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Global değişkenleri tanımla
+            const textTransformRules = [
+                { find: /düzenlenmesi\.$/, yes: 'düzenlendiği', no_bulgu: 'düzenlenmediği', no_oneri: 'düzenlenmesi' },
+                { find: /ettirmesi\.$/, yes: 'ettirdiği', no_bulgu: 'ettirmediği', no_oneri: 'ettirilmesi' },
+                { find: /incelenmesi\.$/, yes: 'incelendiği', no_bulgu: 'incelenmediği', no_oneri: 'incelenmesi' },
+                { find: /durumu\.$/, yes: 'durumunun uygun olduğu', no_bulgu: 'durumunun uygun olmadığı', no_oneri: 'durumunun uygun hale getirilmesi' },
+                { find: /uygunluğu\.$/, yes: 'uygun olduğu', no_bulgu: 'uygun olmadığı', no_oneri: 'uygun hale getirilmesi' },
+                { find: /bulundurulması\.$/, yes: 'bulundurulduğu', no_bulgu: 'bulundurulmadığı', no_oneri: 'bulundurulması' },
+                { find: /olması\.$/, yes: 'olduğu', no_bulgu: 'olmadığı', no_oneri: 'olması' },
+                { find: /yapılması\.$/, yes: 'yapıldığı', no_bulgu: 'yapılmadığı', no_oneri: 'yapılması' },
+                { find: /alınmıştır\.$/, yes: 'alındığı', no_bulgu: 'alınmadığı', no_oneri: 'alınması' },
+                { find: /bulunmamaktadır\.$/, yes: 'bulunmadığı', no_bulgu: 'bulunduğu', no_oneri: 'bulunmaması' },
+                { find: /tutulmaktadır\.$/, yes: 'tutulduğu', no_bulgu: 'tutulmadığı', no_oneri: 'tutulması' },
+                { find: /güncellenmektedir\.$/, yes: 'güncellendiği', no_bulgu: 'güncellenmediği', no_oneri: 'güncellenmesi' },
+                { find: /belirlenmiştir\.$/, yes: 'belirlendiği', no_bulgu: 'belirlenmediği', no_oneri: 'belirlenmesi' },
+                { find: /bulunmaktadır\.$/, yes: 'bulunduğu', no_bulgu: 'bulunmadığı', no_oneri: 'bulundurulması' },
+                { find: /çalışmalar\.$/, yes: 'çalışmaların yapıldığı', no_bulgu: 'çalışmaların yapılmadığı', no_oneri: 'çalışmaların yapılması' },
+                { find: /önlemler\.$/, yes: 'önlemlerin alındığı', no_bulgu: 'önlemlerin alınmadığı', no_oneri: 'önlemlerin alınması' },
+                { find: /raporları\.$/, yes: 'raporlarının bulunduğu', no_bulgu: 'raporlarının bulunmadığı', no_oneri: 'raporlarının bulundurulması' },
+                { find: /belgesi\.$/, yes: 'belgesinin bulunduğu', no_bulgu: 'belgesinin bulunmadığı', no_oneri: 'belgesinin bulundurulması' },
+                { find: /adımları\.$/, yes: 'adımlarının atıldığı', no_bulgu: 'adımlarının atılmadığı', no_oneri: 'adımlarının atılması' },
+                { find: /detektörü\.$/, yes: 'detektörünün bulunduğu', no_bulgu: 'detektörünün bulunmadığı', no_oneri: 'detektörünün bulundurulması' },
+                { find: /çizelgeleri\.$/, yes: 'çizelgelerinin bulunduğu', no_bulgu: 'çizelgelerinin bulunmadığı', no_oneri: 'çizelgelerinin bulundurulması' },
+                { find: /edilmesi\.$/, yes: 'edildiği', no_bulgu: 'edilmediği', no_oneri: 'edilmesi' },
+                { find: /hususlar\.$/, yes: 'hususlara uyulduğu', no_bulgu: 'hususlara uyulmadığı', no_oneri: 'hususlara uyulması' },
+                { find: /oranı\.$/, yes: 'oranına uyulduğu', no_bulgu: 'oranına uyulmadığı', no_oneri: 'oranına uyulması' },
+                { find: /işlemleri\.$/, yes: 'işlemlerinin yapıldığı', no_bulgu: 'işlemlerinin yapılmadığı', no_oneri: 'işlemlerinin yapılması' },
+                { find: /sözleşmesi\.$/, yes: 'sözleşmesinin yapıldığı', no_bulgu: 'sözleşmesinin yapılmadığı', no_oneri: 'sözleşmesinin yapılması' },
+                { find: /uygulanması\.$/, yes: 'uygulandığı', no_bulgu: 'uygulanmadığı', no_oneri: 'uygulanması' },
+                { find: /ayrılması\.$/, yes: 'ayrıldığı', no_bulgu: 'ayrılmadığı', no_oneri: 'ayrılması' },
+                { find: /oluşturulması\.$/, yes: 'oluşturulduğu', no_bulgu: 'oluşturulmadığı', no_oneri: 'oluşturulması' },
+                { find: /raporu\.$/, yes: 'raporunun bulunduğu', no_bulgu: 'raporunun bulunmadığı', no_oneri: 'raporunun bulundurulması' }
+            ];
+
+            function transformText(originalText, ruleType) {
+                let cleanText = originalText.replace(/^\([^\)]+\)\s*/, ''); 
+                let mevzuatText = '';
+                const mevzuatMatch = cleanText.match(/\s*\(.*\)[.,\s]*$/); 
+                if (mevzuatMatch) {
+                    mevzuatText = mevzuatMatch[0]; 
+                    cleanText = cleanText.replace(mevzuatMatch[0], '').trim(); 
+                }
+                if (cleanText.endsWith(',')) cleanText = cleanText.slice(0, -1) + '.';
+                else if (!cleanText.endsWith('.')) cleanText += '.';
+
+                let baseText = '';
+                let ending = '';
+                for (const rule of textTransformRules) {
+                    if (rule.find.test(cleanText)) { 
+                        baseText = cleanText.replace(rule.find, '');
+                        ending = rule[ruleType];
+                        break;
+                    }
+                }
+                if (ending === '') {
+                    baseText = cleanText.replace(/.$/, ''); 
+                    if (ruleType === 'yes') ending = ' olduğu';
+                    else if (ruleType === 'no_bulgu') ending = ' olmadığı';
+                    else if (ruleType === 'no_oneri') ending = baseText.endsWith('e') ? ' edilmesi' : ' olması'; 
+                }
+                let fullText = baseText + ending;
+                if (ruleType === 'no_bulgu' || ruleType === 'no_oneri') fullText += mevzuatText; 
+                return fullText.charAt(0).toUpperCase() + fullText.slice(1);
+            }
+
+            function stripMevzuat(text) {
+                if (!text) return '';
+                return text.replace(/\s*\(.*\)[.,\s]*$/, '').trim();
+            }
+
+            function exportToWord() {
+                populateReport();
+                var content = document.getElementById('report-output').innerHTML;
+                var styles = `
+                    <style>
+                        body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; }
+                        h3 { font-size: 13pt; font-weight: bold; margin-top: 20px; margin-bottom: 10px; }
+                        h4 { font-size: 12pt; font-weight: bold; margin-top: 15px; margin-bottom: 5px; }
+                        p { text-indent: 35px; margin-top: 0; margin-bottom: 10px; text-align: justify; }
+                        .no-indent { text-indent: 0; }
+                        .report-header { text-align: center; font-weight: bold; margin-bottom: 30px; }
+                        .report-title { text-align: center; font-weight: bold; font-size: 14pt; margin-top: 30px; margin-bottom: 20px; }
+                        .report-metadata { width: 100%; border-collapse: collapse; font-size: 11pt; margin-bottom: 20px; }
+                        .report-metadata td { padding: 4px; vertical-align: top; }
+                        .report-sayi-konu { margin-top: 20px; font-size: 11pt; margin-bottom: 20px; }
+                        .report-recipient { font-weight: bold; margin-top: 20px; margin-bottom: 20px; text-align: left; }
+                        .report-bulgular ol { margin-left: 20px; padding-left: 20px; }
+                        .report-signature { margin-top: 50px; width: 100%; display: table; }
+                        .report-signature div { display: table-cell; text-align: center; width: 33%; vertical-align: top; }
+                        table.report-table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; font-size: 11pt; }
+                        table.report-table th, table.report-table td { border: 1px solid #000; padding: 6px 8px; text-align: left; }
+                        table.report-table th { background-color: #eee; font-weight: bold; }
+                        .yonetici-tablosu th { text-align: center; vertical-align: middle; }
+                    </style>
+                `;
+                var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Denetim Raporu</title>" + styles + "</head><body>";
+                var footer = "</body></html>";
+                var sourceHTML = header + content + footer;
+                var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+                var fileDownload = document.createElement("a");
+                document.body.appendChild(fileDownload);
+                fileDownload.href = source;
+                var kurumAdi = document.getElementById('kurumAdi').value || 'Denetim_Raporu';
+                kurumAdi = kurumAdi.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                fileDownload.download = kurumAdi + '_Raporu.doc';
+                fileDownload.click();
+                document.body.removeChild(fileDownload);
+            }
+
+            let auditState = new Map();
+            let currentManagerData = []; // v7.0: Yönetici verisi için global dizi
+            const sectionTitles = new Set();
+            const storageKey = 'denetimAsistaniState_v7_0'; // v7.0: Yeni anahtar
+
+            // v7.0: Yeni Yönetici Satırı Ekleme Fonksiyonu
+            const managerListContainer = document.getElementById('manager-list-container');
+            function renderManagerRow(data = {}) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'manager-row';
+                rowDiv.innerHTML = `
+                    <input type="text" class="save-form-data" data-field="sira" placeholder="No" value="${data.sira || ''}">
+                    <input type="text" class="save-form-data" data-field="ad" placeholder="Adı Soyadı" value="${data.ad || ''}">
+                    <input type="text" class="save-form-data" data-field="gorevi" placeholder="Görevi" value="${data.gorevi || ''}">
+                    <input type="text" class="save-form-data" data-field="onay" placeholder="Onay Tarih/Sayı" value="${data.onay || ''}">
+                    <input type="text" class="save-form-data" data-field="bitis" placeholder="Bitiş Tarihi" value="${data.bitis || ''}">
+                    <button class="remove-manager-btn">Sil</button>
+                `;
+                if(managerListContainer) {
+                    managerListContainer.appendChild(rowDiv);
+                }
+            }
+
+            function initializeState() {
+                auditState.clear();
+                currentManagerData = [];
+                if(managerListContainer) managerListContainer.innerHTML = '';
+                
+                auditData.forEach(item => {
+                    if (item.type === 'prose') {
+                        auditState.set(item.id, { text: '' });
+                    } else if (item.id) {
+                        auditState.set(item.id, { status: 'unset', comment: '', bulgu: '' });
+                        if (item.bulguTitle) sectionTitles.add(item.bulguTitle);
+                    }
+                });
+            }
+
+            function saveState() {
+                const formData = {};
+                document.querySelectorAll('.save-form-data').forEach(input => {
+                    // Yönetici satırları hariç
+                    if (!input.closest('.manager-row')) {
+                        formData[input.id] = input.value;
+                    }
+                });
+
+                // v7.0: Yönetici verilerini topla
+                currentManagerData = [];
+                document.querySelectorAll('.manager-row').forEach(row => {
+                    const manager = {
+                        sira: row.querySelector('[data-field="sira"]').value,
+                        ad: row.querySelector('[data-field="ad"]').value,
+                        gorevi: row.querySelector('[data-field="gorevi"]').value,
+                        onay: row.querySelector('[data-field="onay"]').value,
+                        bitis: row.querySelector('[data-field="bitis"]').value,
+                    };
+                    currentManagerData.push(manager);
+                });
+
+                const stateToSave = {
+                    formData: formData,
+                    auditData: Object.fromEntries(auditState),
+                    managerData: currentManagerData // v7.0: Veriye ekle
+                };
+                try {
+                    localStorage.setItem(storageKey, JSON.stringify(stateToSave));
+                } catch (e) { console.error("Kaydetme başarısız:", e); }
+            }
+
+            function loadState() {
+                const savedState = localStorage.getItem(storageKey);
+                if (!savedState) return;
+                try {
+                    const parsedData = JSON.parse(savedState);
+                    if (parsedData.formData) {
+                        for (const key in parsedData.formData) {
+                            const input = document.getElementById(key);
+                            if (input) input.value = parsedData.formData[key];
+                        }
+                    }
+                    
+                    // v7.0: Yönetici verilerini yükle
+                    if (parsedData.managerData) {
+                        currentManagerData = parsedData.managerData;
+                        if(managerListContainer) managerListContainer.innerHTML = ''; // Konteyneri temizle
+                        currentManagerData.forEach(manager => {
+                            renderManagerRow(manager);
+                        });
+                    }
+                    
+                    if (parsedData.auditData) {
+                        const loadedAuditData = new Map(Object.entries(parsedData.auditData));
+                        loadedAuditData.forEach((value, key) => {
+                            auditState.set(key, value); 
+                        });
+                    }
+                    
+                    auditData.forEach(item => {
+                        if (item.id) {
+                            const state = auditState.get(item.id);
+                            if (item.type === 'prose') {
+                                const textarea = document.getElementById(`prose-${item.id}`);
+                                if (textarea && state) textarea.value = state.text;
+                            } else {
+                                const itemDiv = document.querySelector(`.checklist-item[data-id="${item.id}"]`);
+                                if (itemDiv && state) {
+                                    if (state.status === 'yes') {
+                                        itemDiv.classList.add('selected-yes');
+                                        itemDiv.querySelector('.btn-yes').classList.add('selected');
+                                    } else if (state.status === 'no') {
+                                        itemDiv.classList.add('selected-no');
+                                        itemDiv.querySelector('.btn-no').classList.add('selected');
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    updateMenuProgress();
+                    updateLiveReportPreview();
+                } catch (e) {
+                    console.error("Yükleme hatası:", e);
+                    localStorage.removeItem(storageKey);
+                    initializeState(); 
+                }
+            }
+
+            function clearStorage() {
+                if (confirm('Tüm denetim verilerini temizleyip yeni bir denetim başlatmak istediğinizden emin misiniz?')) {
+                    localStorage.removeItem(storageKey);
+                    location.reload();
+                }
+            }
+
+            // Yedekleme fonksiyonları (v6.8 Düzeltmesi)
+            function exportData() {
+                saveState(); 
+                const dataToExport = localStorage.getItem(storageKey);
+                if (!dataToExport) {
+                    alert("Dışa aktarılacak kayıtlı veri bulunamadı.");
+                    return;
+                }
+                const blob = new Blob([dataToExport], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `denetim-yedegi-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                alert("Denetim verisi 'denetim-yedegi.json' olarak indirildi.");
+            }
+
+            function importData() {
+                document.getElementById('import-file-input').click();
+            }
+
+            function handleImport(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    try {
+                        const importedData = JSON.parse(text);
+                        if (importedData && importedData.formData && importedData.auditData) {
+                            localStorage.setItem(storageKey, text);
+                            alert("Veri başarıyla yüklendi. Uygulama yeniden başlatılıyor...");
+                            location.reload(); 
+                        } else {
+                            alert("Hata: Geçersiz yedekleme dosyası. Dosya formatı bozuk.");
+                        }
+                    } catch (err) {
+                        console.error("İçe aktarma hatası:", err);
+                        alert("Hata: Dosya okunamadı. Lütfen geçerli bir .json yedek dosyası seçin.");
+                    }
+                    event.target.value = null;
+                };
+                reader.readAsText(file);
+            }
+
+            const container = document.getElementById('checklist-container');
+            const sidebar = document.getElementById('sidebar-nav');
+            const liveReportContainer = document.getElementById('live-report-content');
+            const liveReportPlaceholder = document.getElementById('live-report-placeholder');
+
+            function renderChecklist() {
+                try {
+                    let sectionCounter = 1;
+                    let currentContentWrapper = null;
+                    let currentSubmenuWrapper = null;
+                    
+                    auditData.forEach(item => {
+                        const anchorId = `section-${sectionCounter++}`;
+                        if (item.type === 'category') {
+                            const h2 = document.createElement('h2'); 
+                            h2.textContent = item.text; 
+                            h2.id = anchorId;
+                            h2.className = 'collapsible-header collapsed'; 
+                            container.appendChild(h2);
+                            
+                            currentContentWrapper = document.createElement('div');
+                            currentContentWrapper.className = 'collapsible-content';
+                            container.appendChild(currentContentWrapper);
+                            
+                            const menuLink = document.createElement('a'); 
+                            menuLink.href = `#${anchorId}`; 
+                            menuLink.textContent = item.text; 
+                            menuLink.className = 'main-category collapsed'; 
+                            sidebar.appendChild(menuLink);
+                            
+                            currentSubmenuWrapper = document.createElement('div');
+                            currentSubmenuWrapper.className = 'sidebar-submenu';
+                            sidebar.appendChild(currentSubmenuWrapper);
+                        } else if (item.type === 'subcategory') {
+                            const h3 = document.createElement('h3'); 
+                            h3.textContent = item.text; 
+                            h3.id = anchorId;
+                            if(currentContentWrapper) currentContentWrapper.appendChild(h3);
+                            
+                            const menuLink = document.createElement('a'); 
+                            menuLink.href = `#${anchorId}`; 
+                            menuLink.textContent = item.text; 
+                            menuLink.className = 'sub-category';
+                            if (item.bulguTitle) {
+                                menuLink.dataset.bulguTitle = item.bulguTitle;
+                                h3.dataset.bulguTitle = item.bulguTitle;
+                            }
+                            if(currentSubmenuWrapper) currentSubmenuWrapper.appendChild(menuLink);
+                        } else if (item.type === 'prose') {
+                            const proseDiv = document.createElement('div'); 
+                            proseDiv.className = 'prose-section'; 
+                            proseDiv.id = anchorId;
+                            let magicButton = '';
+                            if (item.summaryFor) {
+                                magicButton = `<button class="btn-magic-summary" data-summary-for="${item.summaryFor}">[ 🪄 Sihirli Özet Oluştur ]</button>`;
+                            }
+                            proseDiv.innerHTML = `<label for="prose-${item.id}">${item.label}</label><textarea id="prose-${item.id}" data-id="${item.id}"></textarea>${magicButton}`;
+                            if(currentContentWrapper) currentContentWrapper.appendChild(proseDiv);
+                            
+                            const menuLink = document.createElement('a'); 
+                            menuLink.href = `#${anchorId}`; 
+                            menuLink.textContent = item.label; 
+                            menuLink.className = 'sub-category';
+                            menuLink.dataset.proseId = item.id;
+                            if(currentSubmenuWrapper) currentSubmenuWrapper.appendChild(menuLink);
+                        } else if (item.id) {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'checklist-item';
+                            itemDiv.dataset.id = item.id;
+                            itemDiv.innerHTML = `<div class="item-text" id="text-${item.id}">${item.text}</div><div class="item-controls"><div class="button-group"><button class="btn btn-yes" data-choice="yes">Evet</button><button class="btn btn-no" data-choice="no">Hayır</button></div></div>`;
+                            if(currentContentWrapper) currentContentWrapper.appendChild(itemDiv);
+                        }
+                    });
+                } catch (error) {
+                    console.error("Render hatası:", error);
+                    const errorBox = document.getElementById('error-box');
+                    errorBox.style.display = 'block';
+                    errorBox.textContent = "Veri listesi (auditData) yüklenirken hata oluştu: " + error.message;
+                }
+            }
+            
+            function updateMenuProgress() {
+                sectionTitles.forEach(title => {
+                    const sectionItems = auditData.filter(item => item.bulguTitle === title && item.id);
+                    const isComplete = sectionItems.every(item => {
+                        return auditState.get(item.id)?.status !== 'unset';
+                    });
+                    const menuLink = sidebar.querySelector(`a[data-bulgu-title="${title}"]`);
+                    if (menuLink) menuLink.classList.toggle('completed', isComplete);
+                    const headerElement = container.querySelector(`h3[data-bulgu-title="${title}"]`);
+                    if (headerElement) {
+                        let currentText = headerElement.textContent.replace(' ✔️', '');
+                        headerElement.textContent = isComplete ? currentText + ' ✔️' : currentText;
+                    }
+                });
+            }
+            
+            function groupByCategory(items) {
+                const groups = new Map();
+                items.forEach(item => {
+                    const key = item.bulguTitle; 
+                    if (!groups.has(key)) { groups.set(key, []); }
+                    groups.get(key).push(item);
+                });
+                return groups;
+            }
+            
+            function updateLiveReportPreview() {
+                liveReportContainer.innerHTML = ''; 
+                let hasIssues = false;
+                const categories = ['2', '3', '4', '5', '6'];
+                
+                categories.forEach(category => {
+                    const issuesInCategory = auditData.filter(item => item.reportCategory === category && item.id && auditState.get(item.id)?.status === 'no');
+                    if (issuesInCategory.length === 0) return;
+                    hasIssues = true;
+                    
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'live-report-category';
+                    
+                    const bulguContainer = document.createElement('div');
+                    const groupedFindings = groupByCategory(issuesInCategory); 
+                    groupedFindings.forEach((items, title) => {
+                        bulguContainer.innerHTML += `<h4>${title} - Bulgular</h4>`;
+                        items.forEach(item => {
+                            bulguContainer.innerHTML += `<div class="live-report-item"><label for="bulgu-${item.id}">${item.id} - ${item.text}</label><textarea id="bulgu-${item.id}" class="bulgu-textarea" data-id="${item.id}" data-type="bulgu">${auditState.get(item.id).bulgu}</textarea></div>`;
+                        });
+                    });
+
+                    const oneriContainer = document.createElement('div');
+                    const groupedOneriler = groupByCategory(issuesInCategory); 
+                    groupedOneriler.forEach((items, title) => {
+                        oneriContainer.innerHTML += `<h4>${title} - Çözüm Önerileri</h4>`;
+                        items.forEach(item => {
+                            oneriContainer.innerHTML += `<div class="live-report-item"><label for="oneri-${item.id}">${item.id} - ${item.text}</label><textarea id="oneri-${item.id}" class="oneri-textarea" data-id="${item.id}" data-type="comment">${auditState.get(item.id).comment}</textarea></div>`;
+                        });
+                    });
+                    
+                    categoryDiv.appendChild(bulguContainer);
+                    categoryDiv.appendChild(oneriContainer);
+                    liveReportContainer.appendChild(categoryDiv);
+                });
+
+                liveReportPlaceholder.style.display = hasIssues ? 'none' : 'block';
+                if (hasIssues) liveReportContainer.prepend(liveReportPlaceholder);
+            }
+
+            function generateMagicSummary(bulguTitle) {
+                const itemsInSummary = auditData.filter(item => item.bulguTitle === bulguTitle && item.id);
+                let positivePoints = [];
+                itemsInSummary.forEach(item => {
+                    if (auditState.get(item.id).status === 'yes') {
+                        positivePoints.push(transformText(item.text, 'yes')); 
+                    }
+                });
+                let summaryText = '';
+                if (positivePoints.length > 0) {
+                    summaryText = positivePoints.join(', ') + ' görülmüştür.';
+                } else {
+                    summaryText = 'Bu bölümde olumlu bir bulguya rastlanmamıştır veya bölüm henüz değerlendirilmemiştir.';
+                }
+                const proseItem = auditData.find(item => item.summaryFor === bulguTitle);
+                if (proseItem) {
+                    const textarea = document.getElementById(`prose-${proseItem.id}`);
+                    textarea.value = summaryText;
+                    auditState.get(proseItem.id).text = summaryText;
+                    saveState();
+                }
+            }
+            
+            sidebar.addEventListener('click', function(e) {
+                if (e.target.matches('a.main-category')) {
+                    e.preventDefault();
+                    e.target.classList.toggle('collapsed');
+                }
+            });
+            
+            const mainContentElement = document.getElementById('main-content');
+
+            mainContentElement.addEventListener('click', function(e) {
+                if (e.target.matches('h2.collapsible-header')) {
+                    e.target.classList.toggle('collapsed');
+                }
+                
+                if (e.target.classList.contains('btn')) {
+                    const choice = e.target.dataset.choice;
+                    const itemDiv = e.target.closest('.checklist-item');
+                    if (!itemDiv) return; 
+                    
+                    const id = itemDiv.dataset.id;
+                    const itemTextEl = document.getElementById(`text-${id}`);
+                    if (!itemTextEl) return; 
+                    
+                    const itemText = itemTextEl.textContent;
+                    const state = auditState.get(id);
+                    if (!state) return; 
+
+                    state.status = choice;
+                    
+                    itemDiv.querySelector('.btn-yes').classList.remove('selected');
+                    itemDiv.querySelector('.btn-no').classList.remove('selected');
+                    e.target.classList.add('selected');
+                    itemDiv.classList.remove('selected-yes', 'selected-no');
+
+                    if (choice === 'yes') {
+                        itemDiv.classList.add('selected-yes');
+                        state.comment = ''; 
+                        state.bulgu = '';   
+                    } else if (choice === 'no') {
+                        itemDiv.classList.add('selected-no');
+                        state.comment = transformText(itemText, 'no_oneri');
+                        state.bulgu = transformText(itemText, 'no_bulgu');
+                    }
+                    
+                    updateMenuProgress(); 
+                    updateLiveReportPreview(); 
+                    saveState();
+                }
+
+                if (e.target.classList.contains('btn-magic-summary')) {
+                    e.preventDefault();
+                    const bulguTitle = e.target.dataset.summaryFor;
+                    generateMagicSummary(bulguTitle);
+                }
+                
+                // v7.0: Yönetici Sil Butonu
+                if (e.target.classList.contains('remove-manager-btn')) {
+                    e.preventDefault();
+                    e.target.closest('.manager-row').remove();
+                    saveState(); // Silince de kaydet
+                }
+            });
+
+            liveReportContainer.addEventListener('input', function(e) {
+                if (e.target.tagName === 'TEXTAREA') {
+                    const id = e.target.dataset.id;
+                    const type = e.target.dataset.type;
+                    if (id && type && auditState.has(id)) {
+                        auditState.get(id)[type] = e.target.value;
+                        saveState();
+                    }
+                }
+            });
+
+            mainContentElement.addEventListener('input', function(e) {
+                // v7.0: Dinamik yönetici inputları da 'save-form-data' class'ını kullandığı için
+                // bu listener onları da yakalar ve saveState'i tetikler.
+                if (e.target.classList.contains('save-form-data')) {
+                    saveState();
+                }
+                
+                if (e.target.tagName === 'TEXTAREA' && e.target.closest('.prose-section')) {
+                    const id = e.target.dataset.id;
+                    if (id) {
+                        if (!auditState.has(id)) { 
+                            auditState.set(id, { text: '' });
+                        }
+                        auditState.get(id).text = e.target.value;
+                        saveState();
+                    }
+                }
+            });
+
+            // v7.0: Yönetici Ekle Butonu
+            const addManagerBtn = document.getElementById('add-manager-btn');
+            if(addManagerBtn) {
+                addManagerBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    renderManagerRow(); // Boş satır ekle
+                });
+            }
+
+
+            function populateReport() {
+                const info = {};
+                document.querySelectorAll('.save-form-data').forEach(input => {
+                    // v7.0: Yönetici formları hariç, sadece ana form verilerini al
+                    if (!input.closest('.manager-row')) {
+                        info[input.id] = input.value;
+                    }
+                });
+                info.denetimBaslangic = new Date(info.denetimBaslangic || Date.now()).toLocaleDateString('tr-TR');
+                info.denetimBitis = new Date(info.denetimBitis || Date.now()).toLocaleDateString('tr-TR');
+                info.raporTarihi = new Date(info.raporTarihi || Date.now()).toLocaleDateString('tr-TR');
+                info.mufettis1 = (info.mufettis1 || '').replace(',', '<br>');
+                info.mufettis2 = (info.mufettis2 || '').replace(',', '<br>');
+                info.mufettis3 = (info.mufettis3 || '').replace(',', '<br>');
+
+                document.getElementById('rptIlceAdi').textContent = (info.ilceAdi || '...').toUpperCase();
+                document.getElementById('rptKurumAdi').textContent = (info.kurumAdi || '...').toUpperCase();
+                document.getElementById('rptKurumKodu').textContent = info.kurumKodu;
+                document.getElementById('rptKurumWeb').textContent = info.kurumWeb;
+                document.getElementById('rptKurumEposta').textContent = info.kurumEposta;
+                document.getElementById('rptKurumTelefon').textContent = info.kurumTelefon;
+                document.getElementById('rptOgretmenSayisi').textContent = info.ogretmenSayisi;
+                document.getElementById('rptDigerPersonelSayisi').textContent = info.digerPersonelSayisi;
+                document.getElementById('rptKurucu').textContent = info.kurucu;
+                document.getElementById('rptKurumAcmaIzni').textContent = info.kurumAcmaIzni;
+                document.getElementById('rptOgretimBaslamaIzni').textContent = info.kurumAcmaIzni;
+                document.getElementById('rptKontenjan').textContent = info.kontenjan;
+                document.getElementById('rptUcretsizKursiyer').textContent = info.ucretsizKursiyer;
+                document.getElementById('rptRaporSayi').textContent = info.raporSayi;
+                document.getElementById('rptRaporTarihi').textContent = info.raporTarihi;
+                document.getElementById('rptKonu').textContent = `${info.kurumAdi || '...'} Denetim Raporu`;
+                
+                // Giriş metni alanlarını doldur
+                const rptGirisTarih = document.getElementById('rptGirisTarih');
+                if(rptGirisTarih) rptGirisTarih.textContent = '...';
+                const rptGirisSayi = document.getElementById('rptGirisSayi');
+                if(rptGirisSayi) rptGirisSayi.textContent = '...';
+                const rptGirisIl = document.getElementById('rptGirisIl');
+                if(rptGirisIl) rptGirisIl.textContent = '...';
+                const rptGirisGorevTarih = document.getElementById('rptGirisGorevTarih');
+                if(rptGirisGorevTarih) rptGirisGorevTarih.textContent = '...';
+                const rptGirisGorevSayi = document.getElementById('rptGirisGorevSayi');
+                if(rptGirisGorevSayi) rptGirisGorevSayi.textContent = '...';
+                const rptGirisIlce = document.getElementById('rptGirisIlce');
+                if(rptGirisIlce) rptGirisIlce.textContent = info.ilceAdi;
+                const rptGirisKurumAdi = document.getElementById('rptGirisKurumAdi');
+                if(rptGirisKurumAdi) rptGirisKurumAdi.textContent = info.kurumAdi;
+                const rptGirisDenetimTarihleri = document.getElementById('rptGirisDenetimTarihleri');
+                if(rptGirisDenetimTarihleri) rptGirisDenetimTarihleri.textContent = `${info.denetimBaslangic} - ${info.denetimBitis}`;
+                                
+                document.getElementById('rptMufettis1').innerHTML = info.mufettis1;
+                document.getElementById('rptMufettis2').innerHTML = info.mufettis2;
+                document.getElementById('rptMufettis3').innerHTML = info.mufettis3;
+
+                auditData.forEach(item => {
+                    if (item.type === 'prose') {
+                        const state = auditState.get(item.id);
+                        const proseText = (state && state.text) ? state.text : ''; 
+                        const targetElement = document.getElementById(`rptBolum-${item.id}`); 
+                        if (targetElement) {
+                            targetElement.innerHTML = proseText.split('\n').map(p => {
+                                if (p && p.trim() !== '') {
+                                    return `<p>${stripMevzuat(p)}</p>`; 
+                                }
+                                return '';
+                            }).join('');
+                        }
+                    }
+                });
+
+                const tableTarget = document.getElementById('rptBolum-2.3');
+                if (tableTarget) {
+                    const tableHTML = buildReportTable(auditData, auditState);
+                    if (!tableTarget.innerHTML.includes('<table class="report-table">')) {
+                         tableTarget.innerHTML += tableHTML;
+                    }
+                }
+
+                // v7.0: Yönetici tablosunu doldur
+                const yoneticiTableBody = document.getElementById('yonetici-table-body');
+                if(yoneticiTableBody) {
+                    yoneticiTableBody.innerHTML = ''; // Tablo içini temizle
+                    if (currentManagerData && currentManagerData.length > 0 && currentManagerData.some(m => m.ad)) { // Sadece doluysa doldur
+                        currentManagerData.forEach(manager => {
+                            if (!manager.ad && !manager.gorevi) return; // Boş satırları rapora ekleme
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${manager.sira || ''}</td>
+                                <td>${manager.ad || ''}</td>
+                                <td>${manager.gorevi || ''}</td>
+                                <td>${manager.onay || ''}</td>
+                                <td>${manager.bitis || ''}</td>
+                            `;
+                            yoneticiTableBody.appendChild(tr);
+                        });
+                    } else {
+                        yoneticiTableBody.innerHTML = '<tr><td colspan="5">(Yönetici bilgisi girilmedi)</td></tr>';
+                    }
+                }
+
+
+                const findings = { '2': [], '3': [], '4': [], '5': [], '6': [] };
+                const recommendations = { '2': [], '3': [], '4': [], '5': [], '6': [] };
+                auditData.forEach(item => {
+                    if (item.id && item.reportCategory) {
+                        const state = auditState.get(item.id);
+                        if (state && state.status === 'no' && !item.isTableItem) { 
+                            const finding = { 
+                                bulguTitle: item.bulguTitle, 
+                                bulguText: state.bulgu,   
+                                oneriText: state.comment  
+                            };
+                            findings[item.reportCategory].push(finding);
+                            recommendations[item.reportCategory].push(finding);
+                        }
+                    }
+                });
+
+                for (const category of ['2', '3', '4', '5', '6']) {
+                    const bulguContainer = document.getElementById(`rptBulgular-${category}`);
+                    const oneriContainer = document.getElementById(`rptOneriler-${category}`);
+                    if (!bulguContainer || !oneriContainer) continue; 
+                    
+                    bulguContainer.innerHTML = '';
+                    oneriContainer.innerHTML = '';
+                    
+                    const groupedFindings = groupByCategory(findings[category]); 
+                    if (groupedFindings.size === 0) {
+                        bulguContainer.innerHTML = '<p class="no-indent">---</p>';
+                    } else {
+                        groupedFindings.forEach((items, title) => {
+                            const h4 = document.createElement('h4'); h4.textContent = title; bulguContainer.appendChild(h4);
+                            const ol = document.createElement('ol');
+                            items.forEach(item => { 
+                                const li = document.createElement('li'); 
+                                li.textContent = stripMevzuat(item.bulguText); 
+                                ol.appendChild(li); 
+                            });
+                            bulguContainer.appendChild(ol);
+                        });
+                        bulguContainer.innerHTML += '<p class="no-indent">Tespit edilmiştir.</p>';
+                    }
+                    
+                    const groupedOneriler = groupByCategory(recommendations[category]); 
+                    if (groupedOneriler.size === 0) {
+                        oneriContainer.innerHTML = '<p class="no-indent">---</p>';
+                    } else {
+                        groupedOneriler.forEach((items, title) => {
+                            const h4 = document.createElement('h4'); h4.textContent = title; oneriContainer.appendChild(h4);
+                            const ol = document.createElement('ol');
+                            items.forEach(item => { 
+                                const li = document.createElement('li'); 
+                                li.textContent = item.oneriText; 
+                                ol.appendChild(li); 
+                            });
+                            oneriContainer.appendChild(ol);
+                        });
+                    }
+                }
+            }
+
+            document.getElementById('generate-report-btn').addEventListener('click', function() {
+                if (!confirm('Nihai rapor oluşturulacak ve yazdırma ekranı açılacak. Devam etmek istiyor musunuz?')) {
+                    return;
+                }
+                populateReport();
+                window.print();
+            });
+
+            document.getElementById('export-word-btn').addEventListener('click', function() {
+                exportToWord();
+            });
+
+            function buildReportTable(data, state) {
+                let tableHTML = `
+                    <p class="no-indent"><strong>Tablo 1: Deprem, Yangın ve Doğal Afetler Hazırlık Durumu</strong></p>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Durum</th>
+                                <th>Evet</th>
+                                <th>Hayır</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                const tableItems = data.filter(item => item.isTableItem);
+
+                tableItems.forEach(item => {
+                    const itemState = state.get(item.id);
+                    const cleanText = stripMevzuat(item.text.replace(/^\(Tablo 1\)\s*/, ''));
+                    const yesMark = (itemState && itemState.status === 'yes') ? 'X' : ''; 
+                    const noMark = (itemState && itemState.status === 'no') ? 'X' : ''; 
+                    
+                    tableHTML += `
+                        <tr>
+                            <td>${cleanText}</td>
+                            <td>${yesMark}</td>
+                            <td>${noMark}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += `</tbody></table>`;
+                return tableHTML;
+            }
+
+            document.getElementById('export-btn').addEventListener('click', exportData);
+            document.getElementById('import-btn').addEventListener('click', importData);
+            document.getElementById('import-file-input').addEventListener('change', handleImport);
+            document.getElementById('clear-storage-btn').addEventListener('click', clearStorage);
+            
+
+
+            // === UYGULAMAYI BAŞLAT ===
+            initializeState();  
+            renderChecklist();  
+            loadState();
+        });
+
+document.addEventListener("DOMContentLoaded", function() {
+    const programContainer = document.getElementById("program-list-container");
+    const addBtn = document.getElementById("add-program-btn");
+    const generateBtn = document.getElementById("generate-report-btn");
+
+    let programCounter = 0;
+
+    // Yeni program satırı ekleme
+    addBtn.addEventListener("click", function() {
+        programCounter++;
+        const row = document.createElement("div");
+        row.classList.add("program-row");
+        row.innerHTML = `
+            <input type="text" value="${programCounter}" readonly>
+            <input type="text" placeholder="Program Adı" class="program-adi">
+            <input type="number" placeholder="Kız" class="program-kiz">
+            <input type="number" placeholder="Erkek" class="program-erkek">
+            <input type="text" placeholder="Genel" class="program-genel" readonly>
+            <button class="delete-program">X</button>
+        `;
+        programContainer.appendChild(row);
+
+        // Silme butonu
+        row.querySelector(".delete-program").addEventListener("click", () => {
+            row.remove();
+        });
+
+        // Genel otomatik hesaplama
+        row.querySelector(".program-kiz").addEventListener("input", updateGenel);
+        row.querySelector(".program-erkek").addEventListener("input", updateGenel);
+
+        function updateGenel() {
+            let kiz = parseInt(row.querySelector(".program-kiz").value) || 0;
+            let erkek = parseInt(row.querySelector(".program-erkek").value) || 0;
+            row.querySelector(".program-genel").value = kiz + erkek;
+        }
+    });
+
+    // Rapor oluşturma
+    generateBtn.addEventListener("click", function() {
+        const rows = document.querySelectorAll(".program-row");
+        let tbody = document.getElementById("rptBilimProgramlari");
+        tbody.innerHTML = ""; // temizle
+
+        let toplamKiz = 0, toplamErkek = 0, toplamGenel = 0;
+        let sıra = 1;
+
+        rows.forEach(row => {
+            let adi = row.querySelector(".program-adi").value || "-";
+            let kiz = parseInt(row.querySelector(".program-kiz").value) || 0;
+            let erkek = parseInt(row.querySelector(".program-erkek").value) || 0;
+            let genel = kiz + erkek;
+
+            toplamKiz += kiz;
+            toplamErkek += erkek;
+            toplamGenel += genel;
+
+            tbody.innerHTML += `
+                <tr>
+                    
+                    <td align="center">${adi}</td>
+<td align="center">:</td>
+                    <td align="center">${kiz}</td>
+                    <td align="center">${erkek}</td>
+                    <td align="center">${genel}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById("rptToplamKiz").textContent = toplamKiz;
+        document.getElementById("rptToplamErkek").textContent = toplamErkek;
+        document.getElementById("rptToplamGenel").textContent = toplamGenel;
+
+        if(rows.length === 0){
+            tbody.innerHTML = `<tr><td colspan="5">(Veri girilmedi)</td></tr>`;
+        }
+    });
+});
+</script>
+
+
+</body>
+</html>
